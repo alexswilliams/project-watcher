@@ -1,0 +1,5 @@
+{
+    "extends":"@tsconfig/node20/tsconfig.json",
+    "include": ["infra/**/*", "src/**/*"],
+    "exclude": ["**/*.spec.ts", "cdk.out"]
+}

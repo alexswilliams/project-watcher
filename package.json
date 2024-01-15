@@ -1,0 +1,31 @@
+{
+  "name": "github-project-board-to-confluence-page",
+  "version": "1.0.0",
+  "description": "Updates an existing confluence page with details of items from a github board",
+  "main": "src/index.ts",
+  "scripts": {
+    "run": "CONFLUENCE_PAGE_ID='4433739856' CONFLUENCE_SPACE_NAME='ENG' GITHUB_PROJECT_ID='205' ts-node src/index.ts",
+    "build": "npx tsc",
+    "synth": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk synth",
+    "deploy": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk deploy",
+    "cdk": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk",
+    "clean": "rm -rf cdk.out"
+  },
+  "author": "Alex Williams",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-lambda-powertools/parameters": "1.17.0",
+    "@aws-sdk/client-secrets-manager": "3.491.0",
+    "aws-lambda": "1.0.7",
+    "node-fetch": "3.3.2",
+    "typescript": "5.3.3"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "20.1.2",
+    "@types/aws-lambda": "8.10.131",
+    "aws-cdk-lib": "2.121.1",
+    "esbuild": "0.19.11",
+    "prettier": "3.2.2",
+    "ts-node": "10.9.2"
+  }
+}

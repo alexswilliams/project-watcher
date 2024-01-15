@@ -1,0 +1,36 @@
+import { Config, config } from './config'
+import { updateConfluence } from './confluence'
+import * as github from './github'
+
+export async function main(config: Config) {
+  const projectBoard = await github.getBoardDetails(config.githubToken, config.githubOrgName, config.githubProjectId)
+  const githubTickets = await github.getAllItems(config.githubToken, config.githubOrgName, config.githubProjectId)
+
+  const tickets = githubTickets
+    .filter(it => !it.isArchived)
+    .map(it => ({ title: it.title ?? 'BAU Work', project: it.project ?? 'BAU Work', status: it.status ?? 'Unknown' }))
+
+  await updateConfluence(tickets, config)
+
+  await archivePreviousReported(githubTickets, projectBoard, config)
+  await moveDoneToReported(githubTickets, projectBoard, config)
+}
+
+async function moveDoneToReported(githubTickets: github.GHTicketSpec[], projectBoard: github.GHBoardSpec, config: Config) {
+  const doneAndReportedStatus = projectBoard.statusField.options.find(it => it.name === 'Done & Reported')
+  if (!doneAndReportedStatus) throw Error('Could not find the Done & Reported status column on the project board')
+  const doneTickets = githubTickets.filter(it => !it.isArchived).filter(it => it.status === 'Done')
+  for (const ticket of doneTickets) {
+    console.log(` > Marking issue ${ticket.title} as reported`)
+    await github.moveItemToDoneAndReported(config.githubToken, projectBoard.id, projectBoard.statusField.id, ticket.id, doneAndReportedStatus.id)
+  }
+}
+async function archivePreviousReported(githubTickets: github.GHTicketSpec[], projectBoard: github.GHBoardSpec, config: Config) {
+  const reportedTickets = githubTickets.filter(it => !it.isArchived).filter(it => it.status === 'Done & Reported')
+  for (const ticket of reportedTickets) {
+    console.log(` * Archiving ${ticket.title}`)
+    await github.archiveIssue(config.githubToken, projectBoard.id, ticket.id)
+  }
+}
+
+if (config.lambdaSecretName === '') main(config)
