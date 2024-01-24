@@ -8,6 +8,7 @@ interface SecretsPayload {
   atlassianEmail: string
   atlassianApiToken: string
   githubToken: string
+  githubOrgName: string
 }
 
 export const handler: Handler = async () => {
@@ -18,6 +19,7 @@ export const handler: Handler = async () => {
     username: secrets.atlassianEmail,
     password: secrets.atlassianApiToken,
     githubToken: secrets.githubToken,
+    githubOrgName: secrets.githubOrgName,
   }
   await main(cfg)
 }

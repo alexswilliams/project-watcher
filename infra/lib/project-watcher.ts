@@ -5,7 +5,7 @@ import { aws_lambda as lambda } from 'aws-cdk-lib'
 import { aws_iam as iam } from 'aws-cdk-lib'
 import path from 'path'
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager'
-import { Key } from 'aws-cdk-lib/aws-kms'
+import { LogGroup, LogGroupClass } from 'aws-cdk-lib/aws-logs'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets'
@@ -15,16 +15,18 @@ export class ProjectWatcherStack extends Stack {
     super(scope, `ProjectWatcher`, { env })
     const role = new iam.Role(this, 'LambdaRole', { assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com') })
 
-    const encryptionKey = new Key(this, 'CredentialsKMSKey', {
-      alias: 'ProjectWatcherCredentialsKey',
-      enabled: true,
-    })
-    encryptionKey.grantDecrypt(role)
+    // This costs $1/month!  The default account key costs nothing :)
+    // const encryptionKey = new Key(this, 'CredentialsKMSKey', {
+    //   alias: 'ProjectWatcherCredentialsKey',
+    //   enabled: true,
+    // })
+    // encryptionKey.grantDecrypt(role)
 
+    // This costs 40¢/month
     const secrets = new Secret(this, 'Credentials', {
       removalPolicy: RemovalPolicy.DESTROY,
       secretName: 'ProjectWatcherCredentials',
-      encryptionKey: encryptionKey,
+      // encryptionKey: encryptionKey,
     })
     secrets.grantRead(role)
 
@@ -35,7 +37,12 @@ export class ProjectWatcherStack extends Stack {
       entry: path.join(__dirname, '..', '..', 'src', 'lambda.ts'),
       role: role,
       timeout: Duration.seconds(30),
-      logRetention: RetentionDays.ONE_MONTH,
+      logGroup: new LogGroup(this, 'ScraperLogGroup', {
+        retention: RetentionDays.ONE_MONTH,
+        removalPolicy: RemovalPolicy.DESTROY,
+        logGroupClass: LogGroupClass.INFREQUENT_ACCESS,
+        logGroupName: 'ScraperFunctionLogs',
+      }),
       environment: {
         CONFLUENCE_PAGE_ID: '4433739856',
         CONFLUENCE_SPACE_NAME: 'ENG',
