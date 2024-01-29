@@ -4,8 +4,10 @@ To generate a confluence page with a summary of the current and recent work scra
 
 The issues on the board are set up as follows:
 
-- `Status` field with values `To Do`, `In progress`, `Done`, `Blocked`
+- `Status` field with values `To Do`, `In progress`, `Done`, `Blocked`, `Done & Reported`
 - `Project` field, with the name of the project (optionally with a Jira ticket number), e.g. `Some Project - JIRA-12345`
+
+Once reported on, any issues in `Done` will be automatically moved to `Done & Reported`, and any existing tickets in `Done & Reported` will be archived.
 
 ### Infra
 
