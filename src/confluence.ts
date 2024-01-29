@@ -1,4 +1,4 @@
-import { Config } from './config'
+import { Config, ConfluencePageDetails } from './config'
 
 interface TicketSpec {
   title: string
@@ -11,19 +11,19 @@ const IN_PROGRESS_STATUS = 'In progress'
 const BLOCKED_STATUS = 'Blocked'
 const DONE_STATUS = 'Done'
 
-export async function updateConfluence(tickets: TicketSpec[], config: Config) {
+export async function updateConfluence(tickets: TicketSpec[], config: Config, page: ConfluencePageDetails, execute: boolean = true) {
   const token = Buffer.from(config.username + ':' + config.password).toString('base64')
-  const pageUrl = `${config.atlassianBaseUrl}/wiki/rest/api/content/${config.pageId}`
+  const pageUrl = `${config.atlassianBaseUrl}/wiki/rest/api/content/${page.pageId}`
 
   const nextUp = tickets.filter(it => it.status === TODO_STATUS)
-  const now = tickets.filter(it => it.status === IN_PROGRESS_STATUS || it.status == BLOCKED_STATUS)
+  const now = tickets.filter(it => it.status.toLowerCase() === IN_PROGRESS_STATUS.toLowerCase() || it.status == BLOCKED_STATUS)
   const recentlyDone = tickets.filter(it => it.status === DONE_STATUS)
 
-  const newBody = renderPageBody(config.atlassianBaseUrl, nextUp, now, recentlyDone)
+  const newBody = renderPageBody(config.atlassianBaseUrl, nextUp, now, recentlyDone, page.goalsUid, page.weeklyUid)
 
   const [currentVersion, currentTitle] = await getCurrentPageInfo(pageUrl, token)
   console.log('Found page "' + currentTitle + '" with revision number: ' + currentVersion)
-  const webUiLink = await updatePage(pageUrl, token, config.pageId, currentTitle, config.spaceName, currentVersion, newBody)
+  const webUiLink = await updatePage(pageUrl, token, page.pageId, currentTitle, config.spaceName, currentVersion, newBody, execute)
   console.log('Page successfully updated.  View it here: ' + webUiLink)
 }
 
@@ -58,8 +58,28 @@ async function updatePage(
   spaceKey: string,
   currentVersion: number,
   newBody: string,
-) {
+  execute: boolean,
+): Promise<string> {
   console.log('Updating page with new body and revision number: ' + (currentVersion + 1))
+  const body = JSON.stringify({
+    id: '' + pageId,
+    type: 'page',
+    title: currentTitle,
+    space: { key: spaceKey },
+    version: { number: currentVersion + 1 },
+    body: {
+      storage: {
+        value: newBody,
+        representation: 'storage',
+      },
+    },
+  })
+
+  if (!execute) {
+    console.info('Would have uploaded to confluence: ', pageUrl, body)
+    return 'https://example.org'
+  }
+
   const updateResponse = await fetch(pageUrl, {
     method: 'PUT',
     headers: {
@@ -68,19 +88,7 @@ async function updatePage(
       Authorization: 'Basic ' + token,
       'User-Agent': 'Project Watcher',
     },
-    body: JSON.stringify({
-      id: '' + pageId,
-      type: 'page',
-      title: currentTitle,
-      space: { key: spaceKey },
-      version: { number: currentVersion + 1 },
-      body: {
-        storage: {
-          value: newBody,
-          representation: 'storage',
-        },
-      },
-    }),
+    body,
   })
   if (!updateResponse.ok) {
     console.error('Could not post update to page\n', await updateResponse.json())
@@ -90,7 +98,14 @@ async function updatePage(
   return uploadResponseBody['_links'].base + uploadResponseBody['_links'].webui
 }
 
-function renderPageBody(baseUrl: string, nextUp: TicketSpec[], now: TicketSpec[], recentlyDone: TicketSpec[]): string {
+function renderPageBody(
+  baseUrl: string,
+  nextUp: TicketSpec[],
+  now: TicketSpec[],
+  recentlyDone: TicketSpec[],
+  goalsUid: string,
+  weeklyUid: string,
+): string {
   interface ProjectSpec {
     heading: string
     jira: string | null
@@ -125,7 +140,7 @@ ${project.tickets.map(ticket => `    <li><p>${ticket}</p></li>`).join('\n')}
   return `
 <b>Updated</b>: ${new Date().toISOString().slice(0, 10)}
 <h1>Goals</h1>
-<ac:structured-macro ac:name="excerpt" ac:schema-version="1" data-layout="default" ac:local-id="482aaeaf-142c-416b-a7cd-eb6228de1505" ac:macro-id="4f8ab446f6b433bfcfc4747dec9e22af">
+<ac:structured-macro ac:name="excerpt" ac:schema-version="1" data-layout="default" ac:local-id="${goalsUid}" ac:macro-id="4f8ab446f6b433bfcfc4747dec9e22af">
   <ac:parameter ac:name="name">goals-inner</ac:parameter>
   <ac:rich-text-body>
   <h6>Now</h6>
@@ -146,7 +161,7 @@ ${ticketsByProject(nextUp)
 </ac:structured-macro>
 
 <h1>Weekly Engineering</h1>
-<ac:structured-macro ac:name="excerpt" ac:schema-version="1" data-layout="default" ac:local-id="4ceae4f5-6037-413a-b266-6222debaeb32" ac:macro-id="4f8ab446f6b433bfcfc4747dec9e22af">
+<ac:structured-macro ac:name="excerpt" ac:schema-version="1" data-layout="default" ac:local-id="${weeklyUid}" ac:macro-id="4f8ab446f6b433bfcfc4747dec9e22af">
   <ac:parameter ac:name="name">weekly-eng-inner</ac:parameter>
   <ac:rich-text-body>
 ${ticketsByProject(recentlyDone)

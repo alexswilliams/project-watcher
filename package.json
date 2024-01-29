@@ -4,7 +4,7 @@
   "description": "Updates an existing confluence page with details of items from a github board",
   "main": "src/index.ts",
   "scripts": {
-    "run": "CONFLUENCE_PAGE_ID='4433739856' CONFLUENCE_SPACE_NAME='ENG' GITHUB_PROJECT_ID='205' ts-node src/index.ts",
+    "run": "CONFLUENCE_SPACE_NAME='ENG' GITHUB_PROJECT_TO_PAGE_MAPPINGS='{\"205\":{\"pageId\":\"4433739856\",\"goalsUid\":\"482aaeaf-142c-416b-a7cd-eb6228de1505\",\"weeklyUid\":\"4ceae4f5-6037-413a-b266-6222debaeb32\"},\"196\":{\"pageId\":\"4456153137\",\"goalsUid\":\"92ad0576-474b-4ceb-bb3f-ee29c3e8d667\",\"weeklyUid\":\"bdcd41a8-87ec-4064-b5ed-5576d3f82f44\"}}' ts-node src/index.ts",
     "build": "npx tsc",
     "synth": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk synth",
     "deploy": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk deploy",

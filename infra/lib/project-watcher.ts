@@ -44,9 +44,11 @@ export class ProjectWatcherStack extends Stack {
         logGroupName: 'ScraperFunctionLogs',
       }),
       environment: {
-        CONFLUENCE_PAGE_ID: '4433739856',
+        GITHUB_PROJECT_TO_PAGE_MAPPINGS: JSON.stringify({
+          '205': { pageId: '4433739856', goalsUid: '482aaeaf-142c-416b-a7cd-eb6228de1505', weeklyUid: '4ceae4f5-6037-413a-b266-6222debaeb32' },
+          '196': { pageId: '4456153137', goalsUid: '92ad0576-474b-4ceb-bb3f-ee29c3e8d667', weeklyUid: 'bdcd41a8-87ec-4064-b5ed-5576d3f82f44' },
+        }),
         CONFLUENCE_SPACE_NAME: 'ENG',
-        GITHUB_PROJECT_ID: '205',
         LAMBDA_SECRET_NAME: secrets.secretName,
       },
     })

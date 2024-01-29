@@ -1,16 +1,25 @@
-import { Config, config } from './config'
+import { Config, ConfluencePageDetails, config } from './config'
 import { updateConfluence } from './confluence'
 import * as github from './github'
 
 export async function main(config: Config) {
-  const projectBoard = await github.getBoardDetails(config.githubToken, config.githubOrgName, config.githubProjectId)
-  const githubTickets = await github.getAllItems(config.githubToken, config.githubOrgName, config.githubProjectId)
+  console.log('Received mappings: ', config.projectBoardConfluenceMappings)
+  for (const [githubProjectId, confluencePageDetails] of Object.entries(config.projectBoardConfluenceMappings)) {
+    console.log('Processing board: ', githubProjectId, confluencePageDetails)
+    await exportBoard(config, confluencePageDetails, Number(githubProjectId))
+  }
+  console.log('Complete')
+}
+
+async function exportBoard(config: Config, page: ConfluencePageDetails, githubProjectId: number) {
+  const projectBoard = await github.getBoardDetails(config.githubToken, config.githubOrgName, githubProjectId)
+  const githubTickets = await github.getAllItems(config.githubToken, config.githubOrgName, githubProjectId)
 
   const tickets = githubTickets
     .filter(it => !it.isArchived)
-    .map(it => ({ title: it.title ?? 'BAU Work', project: it.project ?? 'BAU Work', status: it.status ?? 'Unknown' }))
+    .map(it => ({ title: it.title ?? '(Unknown)', project: it.project ?? 'Project Work', status: it.status ?? 'Unknown' }))
 
-  await updateConfluence(tickets, config)
+  await updateConfluence(tickets, config, page)
 
   await archivePreviousReported(githubTickets, projectBoard, config)
   await moveDoneToReported(githubTickets, projectBoard, config)
