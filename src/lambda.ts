@@ -1,7 +1,7 @@
 import { Handler } from 'aws-lambda/handler'
 import { main } from '.'
 import { Config, config } from './config'
-import { getSecret } from '@aws-lambda-powertools/parameters/secrets'
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 
 interface SecretsPayload {
   atlassianBaseUrl: string
@@ -12,7 +12,10 @@ interface SecretsPayload {
 }
 
 export const handler: Handler = async () => {
-  const secrets = JSON.parse((await getSecret(config.lambdaSecretName)) ?? '{}') as SecretsPayload
+  const s3 = new S3Client({ region: config.awsRegion })
+  const secretsFile = await s3.send(new GetObjectCommand({ Bucket: config.lambdaCredentialsBucketName, Key: config.lambdaCredentialsFilePath }))
+  const secrets = JSON.parse((await secretsFile.Body?.transformToString()) ?? '{}') as SecretsPayload
+
   const cfg: Config = {
     ...config,
     atlassianBaseUrl: secrets.atlassianBaseUrl,

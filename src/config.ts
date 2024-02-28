@@ -15,7 +15,9 @@ export interface Config {
   githubToken: string
   githubOrgName: string
   projectBoardConfluenceMappings: ProjectBoardToPageMapping
-  lambdaSecretName: string
+  lambdaCredentialsBucketName: string
+  lambdaCredentialsFilePath: string
+  awsRegion: string
 }
 export const config: Config = {
   atlassianBaseUrl: process.env.ATLASSIAN_BASE_URL ?? '',
@@ -28,5 +30,7 @@ export const config: Config = {
 
   projectBoardConfluenceMappings: JSON.parse(process.env.GITHUB_PROJECT_TO_PAGE_MAPPINGS ?? '{}'),
 
-  lambdaSecretName: process.env.LAMBDA_SECRET_NAME ?? '',
+  lambdaCredentialsBucketName: process.env.LAMBDA_CREDENTIALS_BUCKET_NAME ?? '',
+  lambdaCredentialsFilePath: process.env.LAMBDA_CREDENTIALS_FILE_PATH ?? '',
+  awsRegion: process.env.AWS_REGION ?? '',
 }

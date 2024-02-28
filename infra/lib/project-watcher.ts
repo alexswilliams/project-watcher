@@ -4,11 +4,11 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { aws_lambda as lambda } from 'aws-cdk-lib'
 import { aws_iam as iam } from 'aws-cdk-lib'
 import path from 'path'
-import { Secret } from 'aws-cdk-lib/aws-secretsmanager'
 import { LogGroup, LogGroupClass } from 'aws-cdk-lib/aws-logs'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets'
+import { BlockPublicAccess, Bucket, BucketAccessControl, BucketEncryption } from 'aws-cdk-lib/aws-s3'
 
 export class ProjectWatcherStack extends Stack {
   constructor(scope: Construct, env: Required<Environment>) {
@@ -23,12 +23,23 @@ export class ProjectWatcherStack extends Stack {
     // encryptionKey.grantDecrypt(role)
 
     // This costs 40¢/month
-    const secrets = new Secret(this, 'Credentials', {
-      removalPolicy: RemovalPolicy.DESTROY,
-      secretName: 'ProjectWatcherCredentials',
-      // encryptionKey: encryptionKey,
+    // const secrets = new Secret(this, 'Credentials', {
+    //   removalPolicy: RemovalPolicy.DESTROY,
+    //   secretName: 'ProjectWatcherCredentials',
+    //   encryptionKey: encryptionKey,
+    // })
+    // secrets.grantRead(role)
+
+    const secretsBucket = new Bucket(this, 'CredentialsBucket', {
+      accessControl: BucketAccessControl.PRIVATE,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      publicReadAccess: false,
+      encryption: BucketEncryption.S3_MANAGED,
+      removalPolicy: RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
     })
-    secrets.grantRead(role)
+    const credentialsFile = 'credentials.json'
+    secretsBucket.grantRead(role, credentialsFile)
 
     const logGroup = new LogGroup(this, 'ScraperLogGroup', {
       retention: RetentionDays.ONE_MONTH,
@@ -52,7 +63,9 @@ export class ProjectWatcherStack extends Stack {
           '196': { pageId: '4456153137', goalsUid: '92ad0576-474b-4ceb-bb3f-ee29c3e8d667', weeklyUid: 'bdcd41a8-87ec-4064-b5ed-5576d3f82f44' },
         }),
         CONFLUENCE_SPACE_NAME: 'ENG',
-        LAMBDA_SECRET_NAME: secrets.secretName,
+        LAMBDA_CREDENTIALS_BUCKET_NAME: secretsBucket.bucketName,
+        LAMBDA_CREDENTIALS_FILE_PATH: credentialsFile,
+        // AWS_REGION: this.region, // predefined by lambda runtime
       },
     })
 

@@ -46,4 +46,4 @@ async function archivePreviousReported(githubTickets: github.GHTicketSpec[], pro
   }
 }
 
-if (config.lambdaSecretName === '') main(config)
+if (config.lambdaCredentialsBucketName === '') main(config)

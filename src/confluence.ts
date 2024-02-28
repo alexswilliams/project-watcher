@@ -21,7 +21,6 @@ export async function updateConfluence(tickets: TicketSpec[], config: Config, pa
   const recentlyDone = tickets.filter(it => it.status === DONE_STATUS)
 
   const newBody = renderPageBody(config.atlassianBaseUrl, nextUp, now, recentlyDone, page.goalsUid, page.weeklyUid)
-  console.log(newBody)
 
   const [currentVersion, currentTitle] = await getCurrentPageInfo(pageUrl, token)
   console.log('Found page "' + currentTitle + '" with revision number: ' + currentVersion)
