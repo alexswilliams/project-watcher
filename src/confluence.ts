@@ -1,3 +1,4 @@
+import { encode } from 'html-entities'
 import { Config, ConfluencePageDetails } from './config'
 
 interface TicketSpec {
@@ -20,6 +21,7 @@ export async function updateConfluence(tickets: TicketSpec[], config: Config, pa
   const recentlyDone = tickets.filter(it => it.status === DONE_STATUS)
 
   const newBody = renderPageBody(config.atlassianBaseUrl, nextUp, now, recentlyDone, page.goalsUid, page.weeklyUid)
+  console.log(newBody)
 
   const [currentVersion, currentTitle] = await getCurrentPageInfo(pageUrl, token)
   console.log('Found page "' + currentTitle + '" with revision number: ' + currentVersion)
@@ -112,7 +114,7 @@ function renderPageBody(
     tickets: string[]
   }
   function renderJiraLink(ticket: string): string {
-    return `<a href="${baseUrl}/browse/${ticket}">${ticket}</a>`
+    return `<a href="${baseUrl}/browse/${encodeURIComponent(ticket)}">${encode(ticket)}</a>`
   }
   function projectNameToHeadingData(it: string): [string | null, string, string] {
     // Finds jira numbers at the start or end of strings, with some optional separation, and splits each part out
@@ -127,11 +129,13 @@ function renderPageBody(
       .map(([jira, heading, project]) => ({
         heading,
         jira,
-        tickets: ticketList.filter(it => it.project === project).map(it => (jira === null ? it.title : `${renderJiraLink(jira)}: ${it.title}`)),
+        tickets: ticketList
+          .filter(it => it.project === project)
+          .map(it => (jira === null ? it.title : `${renderJiraLink(jira)}: ${encode(it.title)}`)),
       }))
   }
   function renderSection(sectionTitle: string, project: ProjectSpec) {
-    return `  <h6>${sectionTitle} - ${project.heading}</h6>
+    return `  <h6>${encode(sectionTitle)} - ${encode(project.heading)}</h6>
   <ul>
 ${project.tickets.map(ticket => `    <li><p>${ticket}</p></li>`).join('\n')}
   </ul>`
@@ -146,14 +150,14 @@ ${project.tickets.map(ticket => `    <li><p>${ticket}</p></li>`).join('\n')}
   <h6>Now</h6>
   <ul>
 ${ticketsByProject(now)
-  .map(project => `${project.jira === null ? project.heading : renderJiraLink(project.jira) + ': ' + project.heading}`)
+  .map(project => `${project.jira === null ? encode(project.heading) : renderJiraLink(project.jira) + ': ' + encode(project.heading)}`)
   .map(it => `    <li>${it}</li>`)
   .join('\n')}
   </ul>
   <h6>Next Up</h6>
   <ul>
 ${ticketsByProject(nextUp)
-  .map(project => `${project.jira === null ? project.heading : renderJiraLink(project.jira) + ': ' + project.heading}`)
+  .map(project => `${project.jira === null ? encode(project.heading) : renderJiraLink(project.jira) + ': ' + encode(project.heading)}`)
   .map(it => `    <li>${it}</li>`)
   .join('\n')}
   </ul>

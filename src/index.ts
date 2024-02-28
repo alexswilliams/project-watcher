@@ -5,8 +5,12 @@ import * as github from './github'
 export async function main(config: Config) {
   console.log('Received mappings: ', config.projectBoardConfluenceMappings)
   for (const [githubProjectId, confluencePageDetails] of Object.entries(config.projectBoardConfluenceMappings)) {
-    console.log('Processing board: ', githubProjectId, confluencePageDetails)
-    await exportBoard(config, confluencePageDetails, Number(githubProjectId))
+    try {
+      console.log('Processing board: ', githubProjectId, confluencePageDetails)
+      await exportBoard(config, confluencePageDetails, Number(githubProjectId))
+    } catch (e) {
+      console.error('Failed to export board, skipping: ', githubProjectId, confluencePageDetails, e)
+    }
   }
   console.log('Complete')
 }
