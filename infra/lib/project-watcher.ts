@@ -30,6 +30,14 @@ export class ProjectWatcherStack extends Stack {
     })
     secrets.grantRead(role)
 
+    const logGroup = new LogGroup(this, 'ScraperLogGroup', {
+      retention: RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.DESTROY,
+      logGroupClass: LogGroupClass.INFREQUENT_ACCESS,
+      logGroupName: 'ScraperFunctionLogs',
+    })
+    logGroup.grantWrite(role)
+
     const fn = new NodejsFunction(this, 'ScraperFunction', {
       memorySize: 256,
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -37,12 +45,7 @@ export class ProjectWatcherStack extends Stack {
       entry: path.join(__dirname, '..', '..', 'src', 'lambda.ts'),
       role: role,
       timeout: Duration.seconds(30),
-      logGroup: new LogGroup(this, 'ScraperLogGroup', {
-        retention: RetentionDays.ONE_MONTH,
-        removalPolicy: RemovalPolicy.DESTROY,
-        logGroupClass: LogGroupClass.INFREQUENT_ACCESS,
-        logGroupName: 'ScraperFunctionLogs',
-      }),
+      logGroup: logGroup,
       environment: {
         GITHUB_PROJECT_TO_PAGE_MAPPINGS: JSON.stringify({
           '205': { pageId: '4433739856', goalsUid: '482aaeaf-142c-416b-a7cd-eb6228de1505', weeklyUid: '4ceae4f5-6037-413a-b266-6222debaeb32' },
