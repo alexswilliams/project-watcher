@@ -9,6 +9,7 @@ export type ProjectBoardToPageMapping = {
 
 export interface Config {
   atlassianBaseUrl: string
+  atlasBaseUrl: string
   username: string
   password: string
   spaceName: string
@@ -21,6 +22,7 @@ export interface Config {
 }
 export const config: Config = {
   atlassianBaseUrl: process.env.ATLASSIAN_BASE_URL ?? '',
+  atlasBaseUrl: process.env.ATLAS_BASE_URL ?? '',
   username: process.env.ATLASSIAN_EMAIL ?? '',
   password: process.env.ATLASSIAN_API_TOKEN ?? '',
   spaceName: process.env.CONFLUENCE_SPACE_NAME!!,

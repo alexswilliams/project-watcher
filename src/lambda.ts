@@ -5,6 +5,7 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 
 interface SecretsPayload {
   atlassianBaseUrl: string
+  atlasBaseUrl: string
   atlassianEmail: string
   atlassianApiToken: string
   githubToken: string
@@ -19,6 +20,7 @@ export const handler: Handler = async () => {
   const cfg: Config = {
     ...config,
     atlassianBaseUrl: secrets.atlassianBaseUrl,
+    atlasBaseUrl: secrets.atlasBaseUrl,
     username: secrets.atlassianEmail,
     password: secrets.atlassianApiToken,
     githubToken: secrets.githubToken,

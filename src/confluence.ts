@@ -20,7 +20,7 @@ export async function updateConfluence(tickets: TicketSpec[], config: Config, pa
   const now = tickets.filter(it => it.status.toLowerCase() === IN_PROGRESS_STATUS.toLowerCase() || it.status == BLOCKED_STATUS)
   const recentlyDone = tickets.filter(it => it.status === DONE_STATUS)
 
-  const newBody = renderPageBody(config.atlassianBaseUrl, nextUp, now, recentlyDone, page.goalsUid, page.weeklyUid)
+  const newBody = renderPageBody(config.atlassianBaseUrl, config.atlasBaseUrl, nextUp, now, recentlyDone, page.goalsUid, page.weeklyUid)
 
   const [currentVersion, currentTitle] = await getCurrentPageInfo(pageUrl, token)
   console.log('Found page "' + currentTitle + '" with revision number: ' + currentVersion)
@@ -100,7 +100,8 @@ async function updatePage(
 }
 
 function renderPageBody(
-  baseUrl: string,
+  baseJiraUrl: string,
+  baseAtlasUrl: string,
   nextUp: TicketSpec[],
   now: TicketSpec[],
   recentlyDone: TicketSpec[],
@@ -109,28 +110,39 @@ function renderPageBody(
 ): string {
   interface ProjectSpec {
     heading: string
-    jira: string | null
+    epic: string | null
+    goal: string | null
     tickets: string[]
   }
-  function renderJiraLink(ticket: string): string {
-    return `<a href="${baseUrl}/browse/${encodeURIComponent(ticket)}">${encode(ticket)}</a>`
+  function renderEpicLink(ticket: string): string {
+    return `<a href="${baseJiraUrl}/browse/${encodeURIComponent(ticket)}">${encode(ticket)}</a>`
   }
-  function projectNameToHeadingData(it: string): [string | null, string, string] {
-    // Finds jira numbers at the start or end of strings, with some optional separation, and splits each part out
-    const match = /(?<toRemove>(:|-)?[ ]?(?<jira>[A-Z]{3,}-\d+)[ ]?(:|-)?)/.exec(it)
-    if (match === null) return [null, it.trim(), it]
-    return [match.groups?.jira ?? null, it.replace(match.groups?.toRemove ?? '', '').trim(), it]
+  function renderGoalLink(ticket: string): string {
+    return `<a href="${baseAtlasUrl}/goal/${encodeURIComponent(ticket)}">${encode(ticket)}</a>`
+  }
+  function projectNameToHeadingData(it: string): [string | null, string, string, string | null] {
+    // returns [firstEpic?, heading, projectName, firstGoal?]
+    const epics = [...it.matchAll(/(^|[^A-Z])(?<epic>[A-Z]{4}-\d+)/g)]
+    const goals = [...it.matchAll(/(^|[^A-Z])(?<goal>[A-Z]{8}-\d+)/g)]
+    const headingText = /(?<heading>.+)[ ]*(: |- )/.exec(it)
+    return [epics[0]?.groups?.epic ?? null, headingText?.groups?.heading?.trim() ?? it, it, goals[0]?.groups?.goal ?? null]
   }
   function ticketsByProject(ticketList: TicketSpec[]): ProjectSpec[] {
     return [...new Set(ticketList.map(it => it.project))]
       .map(projectNameToHeadingData)
       .sort()
-      .map(([jira, heading, project]) => ({
+      .map(([epic, heading, project, goal]) => ({
         heading,
-        jira,
+        epic,
+        goal,
         tickets: ticketList
           .filter(it => it.project === project)
-          .map(it => (jira === null ? it.title : `${renderJiraLink(jira)}: ${encode(it.title)}`)),
+          .map(it => {
+            if (epic === null && goal === null) return it.title
+            else if (epic !== null && goal === null) return `${renderEpicLink(epic)}: ${encode(it.title)}`
+            else if (epic === null && goal !== null) return `${renderGoalLink(goal)}: ${encode(it.title)}`
+            else return `${renderEpicLink(epic!)}, ${renderGoalLink(goal!)}: ${encode(it.title)}`
+          }),
       }))
   }
   function renderSection(sectionTitle: string, project: ProjectSpec) {
@@ -149,14 +161,14 @@ ${project.tickets.map(ticket => `    <li><p>${ticket}</p></li>`).join('\n')}
   <h6>Now</h6>
   <ul>
 ${ticketsByProject(now)
-  .map(project => `${project.jira === null ? encode(project.heading) : renderJiraLink(project.jira) + ': ' + encode(project.heading)}`)
+  .map(project => `${project.epic === null ? encode(project.heading) : renderEpicLink(project.epic) + ': ' + encode(project.heading)}`)
   .map(it => `    <li>${it}</li>`)
   .join('\n')}
   </ul>
   <h6>Next Up</h6>
   <ul>
 ${ticketsByProject(nextUp)
-  .map(project => `${project.jira === null ? encode(project.heading) : renderJiraLink(project.jira) + ': ' + encode(project.heading)}`)
+  .map(project => `${project.epic === null ? encode(project.heading) : renderEpicLink(project.epic) + ': ' + encode(project.heading)}`)
   .map(it => `    <li>${it}</li>`)
   .join('\n')}
   </ul>
