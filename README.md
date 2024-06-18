@@ -16,7 +16,7 @@ Deployed with a CDK project to a dedicated AWS account:
 - Lambda: queries github, generates a page body and updates an existing confluence page
 - EventBridge Rule: schedules the execution of the lambda once per week
 
-Deploying: in the simplest case, run `npm run cdk synth` to view output and `npm run cdk deploy` to deploy
+Deploying: in the simplest case, run `npm run synth` to view output and `npm run deploy` to deploy
 
 ### Page Layout
 
