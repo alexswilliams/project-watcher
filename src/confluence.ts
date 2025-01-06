@@ -176,7 +176,7 @@ ${ticketsByProject(nextUp)
 </ac:structured-macro>
 
 <h1>Weekly Engineering</h1>
-<ac:structured-macro ac:name="excerpt" ac:schema-version="1" data-layout="default" ac:local-id="${weeklyUid}" ac:macro-id="4f8ab446f6b433bfcfc4747dec9e22af">
+<ac:structured-macro ac:name="excerpt" ac:schema-version="1" data-layout="default" ac:local-id="${weeklyUid}" ac:macro-id="2d49dcc6-c044-4de4-9b64-0037bd43188d">
   <ac:parameter ac:name="name">weekly-eng-inner</ac:parameter>
   <ac:rich-text-body>
 ${ticketsByProject(recentlyDone)
