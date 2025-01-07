@@ -59,8 +59,11 @@ export class ProjectWatcherStack extends Stack {
       logGroup: logGroup,
       environment: {
         GITHUB_PROJECT_TO_PAGE_MAPPINGS: JSON.stringify({
-          '205': { pageId: '4433739856', goalsUid: '482aaeaf-142c-416b-a7cd-eb6228de1505', weeklyUid: '4ceae4f5-6037-413a-b266-6222debaeb32' },
-          '196': { pageId: '4456153137', goalsUid: '92ad0576-474b-4ceb-bb3f-ee29c3e8d667', weeklyUid: 'bdcd41a8-87ec-4064-b5ed-5576d3f82f44' },
+          '205': {
+            pageId: '231453462',
+            goalsUid: '482aaeaf-142c-416b-a7cd-eb6228de1505',
+            weeklyUid: '4ceae4f5-6037-413a-b266-6222debaeb32',
+          },
         }),
         CONFLUENCE_SPACE_NAME: 'ENG',
         LAMBDA_CREDENTIALS_BUCKET_NAME: secretsBucket.bucketName,
