@@ -53,7 +53,7 @@ export class ProjectWatcherStack extends Stack {
       memorySize: 256,
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'handler',
-      entry: path.join(__dirname, '..', '..', 'src', 'lambda.ts'),
+      entry: path.join(__dirname, '..', '..', 'src', 'project-watcher', 'lambda.ts'),
       role: role,
       timeout: Duration.seconds(30),
       logGroup: logGroup,
