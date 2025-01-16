@@ -16,12 +16,12 @@ export class NodeVersionReporterStack extends Stack {
       retention: RetentionDays.ONE_DAY,
       removalPolicy: RemovalPolicy.DESTROY,
       logGroupClass: LogGroupClass.STANDARD,
-      logGroupName: 'ScraperFunctionLogs',
+      logGroupName: 'NodeVersionReportingFunctionLogs',
     })
     logGroup.grantWrite(role)
 
     new NodejsFunction(this, 'NodeVersionReportingFunction', {
-      memorySize: 64,
+      memorySize: 128,
       runtime: lambda.Runtime.NODEJS_LATEST,
       handler: 'handler',
       entry: path.join(__dirname, '..', '..', 'src', 'node-version-reporter', 'lambda.ts'),
