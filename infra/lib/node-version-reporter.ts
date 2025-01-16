@@ -22,7 +22,7 @@ export class NodeVersionReporterStack extends Stack {
 
     new NodejsFunction(this, 'NodeVersionReportingFunction', {
       memorySize: 128,
-      runtime: lambda.Runtime.NODEJS_LATEST,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'handler',
       entry: path.join(__dirname, '..', '..', 'src', 'node-version-reporter', 'lambda.ts'),
       role: role,
