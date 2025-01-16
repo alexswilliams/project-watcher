@@ -51,7 +51,7 @@ export class ProjectWatcherStack extends Stack {
 
     const fn = new NodejsFunction(this, 'ScraperFunction', {
       memorySize: 256,
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'handler',
       entry: path.join(__dirname, '..', '..', 'src', 'project-watcher', 'lambda.ts'),
       role: role,
