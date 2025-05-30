@@ -8,6 +8,7 @@ export type ProjectBoardToPageMapping = {
 }
 
 export interface Config {
+  canModifyBoard: boolean
   atlassianBaseUrl: string
   atlasBaseUrl: string
   username: string
@@ -21,6 +22,7 @@ export interface Config {
   awsRegion: string
 }
 export const config: Config = {
+  canModifyBoard: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_GITHUB_BOARD ?? 'false').toLowerCase() === 'true',
   atlassianBaseUrl: process.env.ATLASSIAN_BASE_URL ?? '',
   atlasBaseUrl: process.env.ATLAS_BASE_URL ?? '',
   username: process.env.ATLASSIAN_EMAIL ?? '',

@@ -25,8 +25,12 @@ async function exportBoard(config: Config, page: ConfluencePageDetails, githubPr
 
   await updateConfluence(tickets, config, page)
 
-  await archivePreviousReported(githubTickets, projectBoard, config)
-  await moveDoneToReported(githubTickets, projectBoard, config)
+  if (config.canModifyBoard) {
+    await archivePreviousReported(githubTickets, projectBoard, config)
+    await moveDoneToReported(githubTickets, projectBoard, config)
+  } else {
+    console.log(' ! NOT updating github board.')
+  }
 }
 
 async function moveDoneToReported(githubTickets: github.GHTicketSpec[], projectBoard: github.GHBoardSpec, config: Config) {

@@ -110,18 +110,18 @@ function renderPageBody(
 ): string {
   interface ProjectSpec {
     heading: string
-    epic: string | null
-    goal: string | null
+    jiraEpic: string | null
+    atlasProject: string | null
     tickets: string[]
   }
-  function renderEpicLink(ticket: string): string {
+  function renderJiraLink(ticket: string): string {
     return `<a href="${baseJiraUrl}/browse/${encodeURIComponent(ticket)}">${encode(ticket)}</a>`
   }
-  function renderGoalLink(ticket: string): string {
-    return `<a href="${baseAtlasUrl}/goal/${encodeURIComponent(ticket)}">${encode(ticket)}</a>`
+  function renderAtlasLink(ticket: string): string {
+    return `<a href="${baseAtlasUrl}/project/${encodeURIComponent(ticket)}">${encode(ticket)}</a>`
   }
   function projectNameToHeadingData(it: string): [string | null, string, string, string | null] {
-    // returns [firstEpic?, heading, projectName, firstGoal?]
+    // returns [firstJiraEpic?, heading, projectName, firstAtlasProject?]
     const epics = [...it.matchAll(/(^|[^A-Z])(?<epic>[A-Z]{4}-\d+)/g)]
     const goals = [...it.matchAll(/(^|[^A-Z])(?<goal>[A-Z]{8}-\d+)/g)]
     const headingText = /(?<heading>.+)[ ]*(: |- )/.exec(it)
@@ -131,24 +131,24 @@ function renderPageBody(
     return [...new Set(ticketList.map(it => it.project))]
       .map(projectNameToHeadingData)
       .sort()
-      .map(([epic, heading, project, goal]) => ({
+      .map(([jiraEpic, heading, project, atlasProject]) => ({
         heading,
-        epic,
-        goal,
-        tickets: ticketList
-          .filter(it => it.project === project)
-          .map(it => {
-            if (epic === null && goal === null) return it.title
-            else if (epic !== null && goal === null) return `${renderEpicLink(epic)}: ${encode(it.title)}`
-            else if (epic === null && goal !== null) return `${renderGoalLink(goal)}: ${encode(it.title)}`
-            else return `${renderEpicLink(epic!)}, ${renderGoalLink(goal!)}: ${encode(it.title)}`
-          }),
+        jiraEpic,
+        atlasProject,
+        tickets: ticketList.filter(it => it.project === project).map(it => it.title),
       }))
   }
+  function renderLinkPair(jiraEpic: string | null, atlasProject: string | null): string | null {
+    if (jiraEpic === null && atlasProject === null) return null
+    if (jiraEpic !== null && atlasProject === null) return renderJiraLink(jiraEpic)
+    if (jiraEpic === null && atlasProject !== null) return renderAtlasLink(atlasProject)
+    return `${renderJiraLink(jiraEpic!)}, ${renderAtlasLink(atlasProject!)}`
+  }
   function renderSection(sectionTitle: string, project: ProjectSpec) {
-    return `  <h6>${encode(sectionTitle)} - ${encode(project.heading)}</h6>
+    const links = renderLinkPair(project.jiraEpic, project.atlasProject)
+    return `  <h6>${encode(sectionTitle)} - ${encode(project.heading)}${links !== null && ': ' + links}</h6>
   <ul>
-${project.tickets.map(ticket => `    <li><p>${ticket}</p></li>`).join('\n')}
+${project.tickets.map(ticket => `    <li><p>${encode(ticket)}</p></li>`).join('\n')}
   </ul>`
   }
 
@@ -161,14 +161,20 @@ ${project.tickets.map(ticket => `    <li><p>${ticket}</p></li>`).join('\n')}
   <h6>Now</h6>
   <ul>
 ${ticketsByProject(now)
-  .map(project => `${project.epic === null ? encode(project.heading) : renderEpicLink(project.epic) + ': ' + encode(project.heading)}`)
+  .map(project => {
+    const links = renderLinkPair(project.jiraEpic, project.atlasProject)
+    return `${links !== null && links + ': '}${encode(project.heading)}`
+  })
   .map(it => `    <li>${it}</li>`)
   .join('\n')}
   </ul>
   <h6>Next Up</h6>
   <ul>
 ${ticketsByProject(nextUp)
-  .map(project => `${project.epic === null ? encode(project.heading) : renderEpicLink(project.epic) + ': ' + encode(project.heading)}`)
+  .map(project => {
+    const links = renderLinkPair(project.jiraEpic, project.atlasProject)
+    return `${links !== null && links + ': '}${encode(project.heading)}`
+  })
   .map(it => `    <li>${it}</li>`)
   .join('\n')}
   </ul>

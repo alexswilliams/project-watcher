@@ -9,24 +9,26 @@
     "synth": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk synth",
     "deploy": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk deploy --all",
     "cdk": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk",
+    "find-jsversion-lambda-name": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations aws lambda list-functions --query 'Functions[?starts_with(FunctionName, `NodeVersionReporter`) == `true`].FunctionName' --output text",
+    "jsversion": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations aws lambda invoke --function-name=$(npm run --silent find-jsversion-lambda-name) /dev/stdout",
     "clean": "rm -rf cdk.out"
   },
   "author": "Alex Williams",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-s3": "3.730.0",
+    "@aws-sdk/client-s3": "3.820.0",
     "aws-lambda": "1.0.7",
-    "html-entities": "2.5.2",
+    "html-entities": "2.6.0",
     "node-fetch": "3.3.2",
-    "typescript": "5.7.3"
+    "typescript": "5.8.3"
   },
   "devDependencies": {
-    "@tsconfig/node22": "22.0.0",
-    "@types/aws-lambda": "8.10.147",
-    "aws-cdk-lib": "2.176.0",
-    "cdk": "2.176.0",
-    "esbuild": "0.24.2",
-    "prettier": "3.4.2",
+    "@tsconfig/node22": "22.0.2",
+    "@types/aws-lambda": "8.10.149",
+    "aws-cdk-lib": "2.199.0",
+    "cdk": "2.1017.1",
+    "esbuild": "0.25.5",
+    "prettier": "3.5.3",
     "ts-node": "10.9.2"
   }
 }
