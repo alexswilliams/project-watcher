@@ -146,6 +146,9 @@ ${project.tickets.map(ticket => `    <li><p>${encode(ticket)}</p></li>`).join('\
 
   return `
 <b>Updated</b>: ${new Date().toISOString().slice(0, 10)}
+
+<p><i>Changes to this page will be lost - this page is updated automatically every Tuesday evening based on the team GitHub board.  See <a href="https://github.com/alexswilliams/project-watcher">Project-Watcher</a> for more details on this integration.</i></p>
+
 <h1>Goals</h1>
 <ac:structured-macro ac:name="excerpt" ac:schema-version="1" data-layout="default" ac:local-id="${goalsUid}" ac:macro-id="4f8ab446f6b433bfcfc4747dec9e22af">
   <ac:parameter ac:name="name">goals-inner</ac:parameter>
