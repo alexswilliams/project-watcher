@@ -36,10 +36,24 @@ query FindBoardDetails($orgName: String!, $projectNumber: Int!) {
           }
         }
       }
+      projectField: field(name: "Project") {
+        ... on ProjectV2Field {
+          id
+        }
+      }
+      jiraEpicField: field(name: "Jira Epic") {
+        ... on ProjectV2Field {
+          id
+        }
+      }
+      atlasProjectField: field(name: "Atlas Project") {
+        ... on ProjectV2Field {
+          id
+        }
+      }
     }
   }
-}
-`
+}`
 export interface GHBoardSpec {
   id: string
   title: string
@@ -47,11 +61,11 @@ export interface GHBoardSpec {
   url: string
   statusField: {
     id: string
-    options: Array<{
-      id: string
-      name: string
-    }>
+    options: Array<{ id: string; name: string }>
   }
+  projectField: { id: string }
+  jiraEpicField: { id: string }
+  atlasProjectField: { id: string }
 }
 interface GHProjectBoardResponse {
   organization: {
@@ -72,11 +86,7 @@ const projectQuery = `
 query FindAllTicketsOnProjectBoard($orgName: String!, $projectNumber: Int!, $lastItem: String) {
   organization(login: $orgName) {
     projectV2(number: $projectNumber) {
-      items(
-        first: 100
-        after: $lastItem
-        orderBy: { direction: ASC, field: POSITION }
-      ) {
+      items(first: 100, after: $lastItem, orderBy: {direction: ASC, field: POSITION}) {
         pageInfo {
           hasNextPage
           endCursor
@@ -91,6 +101,16 @@ query FindAllTicketsOnProjectBoard($orgName: String!, $projectNumber: Int!, $las
             }
           }
           project: fieldValueByName(name: "Project") {
+            ... on ProjectV2ItemFieldTextValue {
+              text
+            }
+          }
+          jiraEpic: fieldValueByName(name: "Jira Epic") {
+            ... on ProjectV2ItemFieldTextValue {
+              text
+            }
+          }
+          atlasProject: fieldValueByName(name: "Atlas Project") {
             ... on ProjectV2ItemFieldTextValue {
               text
             }
@@ -120,6 +140,8 @@ interface GHProjectQueryResponse {
           isArchived: boolean
           title: { text: string | null } | null
           project: { text: string | null } | null
+          jiraEpic: { text: string | null } | null
+          atlasProject: { text: string | null } | null
           status: { name: string | null } | null
         }>
       }
@@ -130,7 +152,9 @@ export interface GHTicketSpec {
   id: string
   isDraft: boolean
   isArchived: boolean
-  project: string | null
+  projectGHField: string | null
+  jiraEpicGHField: string | null
+  atlasProjectGHField: string | null
   status: string | null
   title: string | null
 }
@@ -147,13 +171,15 @@ async function getPageOfItemsFromGithub(
   })) as { data: GHProjectQueryResponse }
   const root = responseBody.data.organization.projectV2
   return {
-    nextToken: root.items.pageInfo.hasNextPage ? root.items.pageInfo.endCursor ?? null : null,
+    nextToken: root.items.pageInfo.hasNextPage ? (root.items.pageInfo.endCursor ?? null) : null,
     page: root.items.nodes.map(node => {
       return {
         id: node.id,
         isDraft: node.type == 'DRAFT_ISSUE',
         isArchived: node.isArchived,
-        project: node.project?.text ?? null,
+        projectGHField: node.project?.text ?? null,
+        jiraEpicGHField: node.jiraEpic?.text ?? null,
+        atlasProjectGHField: node.atlasProject?.text ?? null,
         status: node.status?.name ?? null,
         title: node.title?.text ?? null,
       }
@@ -183,8 +209,7 @@ mutation MoveIssueToStatus($projectId: ID!, $statusFieldId: ID!, $itemId: ID!, $
       value: { singleSelectOptionId: $newStatusId }
     }
   ) {projectV2Item {id updatedAt}}
-}
-`
+}`
 interface GHMoveIssueToStatusMutationResponse {
   updateProjectV2ItemFieldValue: {
     projectV2Item: {
@@ -200,25 +225,53 @@ export async function moveItemToDoneAndReported(
   itemId: string,
   newStatusId: string,
 ): Promise<void> {
-  const result = (await queryGithubGraphQl(token, moveIssueMutation, {
-    projectId: projectId,
-    statusFieldId: statusFieldId,
-    itemId: itemId,
-    newStatusId: newStatusId,
-  })) as { data: GHMoveIssueToStatusMutationResponse }
+  const result = (await queryGithubGraphQl(token, moveIssueMutation, { projectId, statusFieldId, itemId, newStatusId })) as {
+    data: GHMoveIssueToStatusMutationResponse
+  }
   if (result.data.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
     console.error('Unexpected ID: ', result.data.updateProjectV2ItemFieldValue)
     throw Error('Unpexted ID returned when updating status of ' + itemId)
   }
 }
 
-const archiveIssueMutation = `
-mutation ArchiveIssue($projectId: ID!, $itemId: ID!) {
-  archiveProjectV2Item(input: {projectId: $projectId, itemId: $itemId}) {
-    item {id isArchived}
+const setFieldTextIssueMutation = `
+mutation SetFieldText($projectId: ID!, $fieldId: ID!, $itemId: ID!, $newValue: String!) {
+  updateProjectV2ItemFieldValue(
+    input: {
+      projectId: $projectId
+      itemId: $itemId
+      fieldId: $fieldId
+      value: { text: $newValue }
+    }
+  ) {projectV2Item {id updatedAt}}
+}`
+interface GHSetFieldTextMutationResponse {
+  updateProjectV2ItemFieldValue: {
+    projectV2Item: {
+      id: string
+      updatedAt: string
+    }
   }
 }
-`
+export async function setFieldText(token: string, projectId: string, fieldId: string, itemId: string, newValue: string): Promise<void> {
+  const result = (await queryGithubGraphQl(token, setFieldTextIssueMutation, { projectId, fieldId, itemId, newValue })) as {
+    data: GHSetFieldTextMutationResponse
+  }
+  if (result.data.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
+    console.error('Unexpected ID: ', result.data.updateProjectV2ItemFieldValue)
+    throw Error('Unpexted ID returned when updating field value of ' + itemId)
+  }
+}
+
+const archiveIssueMutation = `
+mutation ArchiveIssue($projectId: ID!, $itemId: ID!) {
+  archiveProjectV2Item(
+    input: {
+      projectId: $projectId
+      itemId: $itemId
+    }
+  ) { item {id isArchived} }
+}`
 interface GHArchiveIssueMutationResponse {
   archiveProjectV2Item: {
     item: {
@@ -228,10 +281,9 @@ interface GHArchiveIssueMutationResponse {
   }
 }
 export async function archiveIssue(token: string, projectId: string, itemId: string): Promise<void> {
-  const result = (await queryGithubGraphQl(token, archiveIssueMutation, {
-    projectId: projectId,
-    itemId: itemId,
-  })) as { data: GHArchiveIssueMutationResponse }
+  const result = (await queryGithubGraphQl(token, archiveIssueMutation, { projectId: projectId, itemId: itemId })) as {
+    data: GHArchiveIssueMutationResponse
+  }
   if (result.data.archiveProjectV2Item.item.id !== itemId || result.data.archiveProjectV2Item.item.isArchived === false) {
     console.error('Unexpected result when archiving: ', result.data.archiveProjectV2Item)
     throw Error('Unpexted result returned when archiving ' + itemId)

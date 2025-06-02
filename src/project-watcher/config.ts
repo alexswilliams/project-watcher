@@ -8,6 +8,7 @@ export type ProjectBoardToPageMapping = {
 }
 
 export interface Config {
+  canModifyConfluence: boolean
   canModifyBoard: boolean
   atlassianBaseUrl: string
   atlasBaseUrl: string
@@ -22,6 +23,7 @@ export interface Config {
   awsRegion: string
 }
 export const config: Config = {
+  canModifyConfluence: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE ?? 'false').toLowerCase() === 'true',
   canModifyBoard: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_GITHUB_BOARD ?? 'false').toLowerCase() === 'true',
   atlassianBaseUrl: process.env.ATLASSIAN_BASE_URL ?? '',
   atlasBaseUrl: process.env.ATLAS_BASE_URL ?? '',

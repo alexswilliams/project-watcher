@@ -58,6 +58,7 @@ export class ProjectWatcherStack extends Stack {
       timeout: Duration.seconds(30),
       logGroup: logGroup,
       environment: {
+        GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE: 'true',
         GITHUB_PROJECT_JOB_CAN_MODIFY_GITHUB_BOARD: 'true',
         GITHUB_PROJECT_TO_PAGE_MAPPINGS: JSON.stringify({
           '205': {
