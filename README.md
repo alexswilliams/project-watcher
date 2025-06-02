@@ -28,14 +28,14 @@ Deploying: in the simplest case, run `npm run synth` to view output and `npm run
 ### Infra
 
 ```mermaid
-graph Infra;
-EB Scheduler --> Lambda;
-Lambda --> Github;
-Lambda --> Confluence;
-EB Scheduler --> SQS DLQ;
-SQS DLQ --> EB Pipe;
-EB Pipe --> SNS Topic;
-SNS Topic --> Email;
+flowchart LR
+  A[EventBridge Scheduler] --> Lambda
+  Lambda --> Github
+  Lambda --> Confluence
+  A[EventBridge Scheduler] --> B[SQS DLQ]
+  B[SQS DLQ] --> C[EventBridge Pipe]
+  C[EventBridge Pipe] --> D[SNS Topic]
+  D[SNS Topic] --> Email
 ```
 
 ### Updating
