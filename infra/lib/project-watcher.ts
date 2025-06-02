@@ -95,7 +95,7 @@ export class ProjectWatcherStack extends Stack {
     new Schedule(this, 'InvocationSchedule', {
       enabled: true,
       schedule: ScheduleExpression.cron({ hour: '17', minute: '45', timeZone: TimeZone.EUROPE_LONDON }),
-      timeWindow: TimeWindow.flexible(Duration.minutes(15)),
+      timeWindow: TimeWindow.flexible(Duration.minutes(5)),
       target: new LambdaInvoke(fn, { retryAttempts: 0, role: schedulerRole, deadLetterQueue: dlq }),
       description: 'Invokes the Project Watcher lambda to update tickets on github boards and occasionally post summaries into confluence.',
     })
