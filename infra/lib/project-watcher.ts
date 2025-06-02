@@ -7,13 +7,15 @@ import path from 'path'
 import { LogGroup, LogGroupClass } from 'aws-cdk-lib/aws-logs'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { BlockPublicAccess, Bucket, BucketAccessControl, BucketEncryption } from 'aws-cdk-lib/aws-s3'
-import { Schedule, ScheduleExpression } from 'aws-cdk-lib/aws-scheduler'
+import { Schedule, ScheduleExpression, ScheduleGroup, TimeWindow } from 'aws-cdk-lib/aws-scheduler'
 import { LambdaInvoke } from 'aws-cdk-lib/aws-scheduler-targets'
+import { Queue } from 'aws-cdk-lib/aws-sqs'
 
 export class ProjectWatcherStack extends Stack {
   constructor(scope: Construct, env: Required<Environment>) {
     super(scope, `ProjectWatcher`, { env })
-    const role = new iam.Role(this, 'LambdaRole', { assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com') })
+    const lambdaRole = new iam.Role(this, 'LambdaRole', { assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com') })
+    const schedulerRole = new iam.Role(this, 'SchedulerRole', { assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com') })
 
     // This costs $1/month!  The default account key costs nothing :)
     // const encryptionKey = new Key(this, 'CredentialsKMSKey', {
@@ -39,7 +41,7 @@ export class ProjectWatcherStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE,
     })
     const credentialsFile = 'credentials.json'
-    secretsBucket.grantRead(role, credentialsFile)
+    secretsBucket.grantRead(lambdaRole, credentialsFile)
 
     const logGroup = new LogGroup(this, 'ScraperLogGroup', {
       retention: RetentionDays.ONE_MONTH,
@@ -47,14 +49,14 @@ export class ProjectWatcherStack extends Stack {
       logGroupClass: LogGroupClass.INFREQUENT_ACCESS,
       logGroupName: 'ScraperFunctionLogs',
     })
-    logGroup.grantWrite(role)
+    logGroup.grantWrite(lambdaRole)
 
     const fn = new NodejsFunction(this, 'ScraperFunction', {
       memorySize: 256,
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'handler',
       entry: path.join(__dirname, '..', '..', 'src', 'project-watcher', 'lambda.ts'),
-      role: role,
+      role: lambdaRole,
       timeout: Duration.seconds(30),
       logGroup: logGroup,
       environment: {
@@ -74,10 +76,13 @@ export class ProjectWatcherStack extends Stack {
       },
     })
 
+    const dlq = new Queue(this, 'ScheduleDQL')
+
     new Schedule(this, 'InvocationSchedule', {
       enabled: true,
       schedule: ScheduleExpression.cron({ hour: '17', minute: '45', timeZone: TimeZone.EUROPE_LONDON }),
-      target: new LambdaInvoke(fn, { retryAttempts: 0 }),
+      timeWindow: TimeWindow.flexible(Duration.minutes(15)),
+      target: new LambdaInvoke(fn, { retryAttempts: 0, role: schedulerRole, deadLetterQueue: dlq }),
       description: 'Invokes the Project Watcher lambda to update tickets on github boards and occasionally post summaries into confluence.',
     })
   }
