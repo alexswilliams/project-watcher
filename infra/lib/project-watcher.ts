@@ -1,4 +1,4 @@
-import { Duration, Environment, RemovalPolicy, Stack } from 'aws-cdk-lib/core'
+import { Duration, Environment, RemovalPolicy, Stack, TimeZone } from 'aws-cdk-lib/core'
 import { Construct } from 'constructs'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { aws_lambda as lambda } from 'aws-cdk-lib'
@@ -6,9 +6,9 @@ import { aws_iam as iam } from 'aws-cdk-lib'
 import path from 'path'
 import { LogGroup, LogGroupClass } from 'aws-cdk-lib/aws-logs'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
-import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
-import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets'
 import { BlockPublicAccess, Bucket, BucketAccessControl, BucketEncryption } from 'aws-cdk-lib/aws-s3'
+import { Schedule, ScheduleExpression } from 'aws-cdk-lib/aws-scheduler'
+import { LambdaInvoke } from 'aws-cdk-lib/aws-scheduler-targets'
 
 export class ProjectWatcherStack extends Stack {
   constructor(scope: Construct, env: Required<Environment>) {
@@ -74,10 +74,11 @@ export class ProjectWatcherStack extends Stack {
       },
     })
 
-    new Rule(this, 'InvokeSchedule', {
+    new Schedule(this, 'InvocationSchedule', {
       enabled: true,
-      schedule: Schedule.cron({ weekDay: 'Tuesday', hour: '17', minute: '0' }),
-      targets: [new LambdaFunction(fn)],
+      schedule: ScheduleExpression.cron({ hour: '17', minute: '45', timeZone: TimeZone.EUROPE_LONDON }),
+      target: new LambdaInvoke(fn, { retryAttempts: 0 }),
+      description: 'Invokes the Project Watcher lambda to update tickets on github boards and occasionally post summaries into confluence.',
     })
   }
 }
