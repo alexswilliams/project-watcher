@@ -25,6 +25,19 @@ Deploying: in the simplest case, run `npm run synth` to view output and `npm run
 - Weekly Engineering
   - Two itemised lists: Recently Done (broken down by project, drawn from the "Done" status), and "Now" (from the In Progress status)
 
+### Infra
+
+```mermaid
+graph Infra;
+EB Scheduler --> Lambda;
+Lambda --> Github;
+Lambda --> Confluence;
+EB Scheduler --> SQS DLQ;
+SQS DLQ --> EB Pipe;
+EB Pipe --> SNS Topic;
+SNS Topic --> Email;
+```
+
 ### Updating
 
 - ```shell
