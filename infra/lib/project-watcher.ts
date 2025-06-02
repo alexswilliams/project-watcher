@@ -10,12 +10,17 @@ import { BlockPublicAccess, Bucket, BucketAccessControl, BucketEncryption } from
 import { Schedule, ScheduleExpression, ScheduleGroup, TimeWindow } from 'aws-cdk-lib/aws-scheduler'
 import { LambdaInvoke } from 'aws-cdk-lib/aws-scheduler-targets'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
+import { Topic } from 'aws-cdk-lib/aws-sns'
+import { EmailSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
+import { CfnPipe } from 'aws-cdk-lib/aws-pipes'
+import { ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 
 export class ProjectWatcherStack extends Stack {
   constructor(scope: Construct, env: Required<Environment>) {
     super(scope, `ProjectWatcher`, { env })
     const lambdaRole = new iam.Role(this, 'LambdaRole', { assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com') })
     const schedulerRole = new iam.Role(this, 'SchedulerRole', { assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com') })
+    const pipeRole = new iam.Role(this, 'PipeRole', { assumedBy: new iam.ServicePrincipal('pipes.amazonaws.com') })
 
     // This costs $1/month!  The default account key costs nothing :)
     // const encryptionKey = new Key(this, 'CredentialsKMSKey', {
@@ -77,6 +82,15 @@ export class ProjectWatcherStack extends Stack {
     })
 
     const dlq = new Queue(this, 'ScheduleDQL')
+    const topic = new Topic(this, 'SchedulerDlqBroadcaster') // email subscription added by hand
+    dlq.grantConsumeMessages(pipeRole)
+    topic.grantPublish(pipeRole)
+    new CfnPipe(this, 'DlqPipe', {
+      name: 'SchedulerDlqToEmailPipe',
+      source: dlq.queueArn,
+      target: topic.topicArn,
+      roleArn: pipeRole.roleArn,
+    })
 
     new Schedule(this, 'InvocationSchedule', {
       enabled: true,
