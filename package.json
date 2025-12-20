@@ -16,19 +16,19 @@
   "author": "Alex Williams",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-s3": "3.820.0",
+    "@aws-sdk/client-s3": "3.956.0",
     "aws-lambda": "1.0.7",
     "html-entities": "2.6.0",
     "node-fetch": "3.3.2",
-    "typescript": "5.8.3"
+    "typescript": "5.9.3"
   },
   "devDependencies": {
-    "@tsconfig/node22": "22.0.2",
-    "@types/aws-lambda": "8.10.149",
-    "aws-cdk-lib": "2.199.0",
-    "cdk": "2.1017.1",
-    "esbuild": "0.25.5",
-    "prettier": "3.5.3",
+    "@tsconfig/node24": "24.0.3",
+    "@types/aws-lambda": "8.10.159",
+    "aws-cdk-lib": "2.233.0",
+    "cdk": "2.1100.1",
+    "esbuild": "0.27.2",
+    "prettier": "3.7.4",
     "ts-node": "10.9.2"
   }
 }

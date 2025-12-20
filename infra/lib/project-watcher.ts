@@ -7,13 +7,11 @@ import path from 'path'
 import { LogGroup, LogGroupClass } from 'aws-cdk-lib/aws-logs'
 import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { BlockPublicAccess, Bucket, BucketAccessControl, BucketEncryption } from 'aws-cdk-lib/aws-s3'
-import { Schedule, ScheduleExpression, ScheduleGroup, TimeWindow } from 'aws-cdk-lib/aws-scheduler'
+import { Schedule, ScheduleExpression } from 'aws-cdk-lib/aws-scheduler'
 import { LambdaInvoke } from 'aws-cdk-lib/aws-scheduler-targets'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { Topic } from 'aws-cdk-lib/aws-sns'
-import { EmailSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import { CfnPipe } from 'aws-cdk-lib/aws-pipes'
-import { ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 
 export class ProjectWatcherStack extends Stack {
   constructor(scope: Construct, env: Required<Environment>) {
@@ -58,7 +56,7 @@ export class ProjectWatcherStack extends Stack {
 
     const fn = new NodejsFunction(this, 'ScraperFunction', {
       memorySize: 256,
-      runtime: lambda.Runtime.NODEJS_22_X,
+      runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '..', '..', 'src', 'project-watcher', 'lambda.ts'),
       role: lambdaRole,
