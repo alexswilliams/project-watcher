@@ -1,33 +1,30 @@
 {
-  "name": "github-project-board-to-confluence-page",
+  "name": "project-watcher",
   "version": "1.0.0",
-  "description": "Updates an existing confluence page with details of items from a github board",
-  "main": "src/index.ts",
+  "description": "Runs actions against a github issues board on a set schedule",
   "scripts": {
-    "run": "CONFLUENCE_SPACE_NAME='ENG' GITHUB_PROJECT_TO_PAGE_MAPPINGS='{\"205\":{\"pageId\":\"231453462\",\"goalsUid\":\"482aaeaf-142c-416b-a7cd-eb6228de1505\",\"weeklyUid\":\"4ceae4f5-6037-413a-b266-6222debaeb32\"}}' ts-node src/project-watcher/index.ts",
-    "build": "npx tsc",
+    "run": "CONFLUENCE_SPACE_NAME='ENG' GITHUB_PROJECT_TO_PAGE_MAPPINGS='{\"205\":{\"pageId\":\"231453462\",\"goalsUid\":\"482aaeaf-142c-416b-a7cd-eb6228de1505\",\"weeklyUid\":\"4ceae4f5-6037-413a-b266-6222debaeb32\"}}' ts-node src/github-to-confluence-reporter/index.ts",
     "synth": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk synth",
     "deploy": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk deploy --all",
     "cdk": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk",
     "find-jsversion-lambda-name": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations aws lambda list-functions --query 'Functions[?starts_with(FunctionName, `NodeVersionReporter`) == `true`].FunctionName' --output text",
     "jsversion": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations aws lambda invoke --function-name=$(npm run --silent find-jsversion-lambda-name) /dev/stdout",
-    "clean": "rm -rf cdk.out"
+    "clean": "rm -rf cdk.out && find . -regex '.*/node_modules/.*' -prune -or -type f -and -name *.js -and -delete"
   },
   "author": "Alex Williams",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1010.0",
-    "aws-lambda": "1.0.6",
+    "@aws-sdk/client-s3": "3.1027.0",
+    "@aws-sdk/client-lambda": "3.1027.0",
     "html-entities": "2.6.0",
     "node-fetch": "3.3.2",
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   },
   "devDependencies": {
     "@tsconfig/node24": "24.0.4",
-    "@types/aws-lambda": "8.10.161",
-    "aws-cdk-lib": "2.243.0",
-    "cdk": "2.1111.0",
-    "esbuild": "0.27.4",
+    "aws-cdk-lib": "2.248.0",
+    "cdk": "2.1118.0",
+    "esbuild": "0.28.0",
     "prettier": "3.8.1",
     "ts-node": "10.9.2"
   }

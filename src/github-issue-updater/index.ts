@@ -51,7 +51,10 @@ async function exportBoard(config: Config, page: ConfluencePageDetails, githubPr
   } else console.log(' ! NOT performing weekly tasks')
 }
 
-if (config.lambdaCredentialsBucketName === '') main(config)
+if (config.lambdaCredentialsBucketName === '') {
+  main(config)
+}
+
 function shouldPerformWeeklyTasks() {
   // Only move tickets or update confluence on Tuesday evenings.
   return new Date().getDay() === 2

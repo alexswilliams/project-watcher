@@ -1,5 +1,8 @@
 {
   "extends": "@tsconfig/node24/tsconfig.json",
   "include": ["infra/**/*", "src/**/*"],
-  "exclude": ["**/*.spec.ts", "cdk.out"]
+  "exclude": ["**/*.spec.ts", "cdk.out"],
+  "compilerOptions": {
+    "types": ["node"]
+  }
 }

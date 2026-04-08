@@ -1,11 +1,9 @@
+import { aws_iam as iam, aws_lambda as lambda } from 'aws-cdk-lib'
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
+import { LogGroup, LogGroupClass, RetentionDays } from 'aws-cdk-lib/aws-logs'
 import { Duration, Environment, RemovalPolicy, Stack } from 'aws-cdk-lib/core'
 import { Construct } from 'constructs'
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
-import { aws_lambda as lambda } from 'aws-cdk-lib'
-import { aws_iam as iam } from 'aws-cdk-lib'
 import path from 'path'
-import { LogGroup, LogGroupClass } from 'aws-cdk-lib/aws-logs'
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
 
 export class NodeVersionReporterStack extends Stack {
   constructor(scope: Construct, env: Required<Environment>) {

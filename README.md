@@ -29,29 +29,34 @@ Deploying: in the simplest case, run `npm run synth` to view output and `npm run
 
 ```mermaid
 flowchart LR
-  A[EventBridge Scheduler] --> Lambda
-  Lambda --> Github
-  Lambda --> Confluence
-  A[EventBridge Scheduler] --> B[SQS DLQ]
+  A[EventBridge Scheduler - Weekly] --> X[Github to Confluence Lambda]
+  A[EventBridge Scheduler - Weekly] --> B[SQS DLQ]
   B[SQS DLQ] --> C[EventBridge Pipe]
   C[EventBridge Pipe] --> D[SNS Topic]
   D[SNS Topic] --> Email
+  Q[EventBridge Scheduler - Hourly] --> B[SQS DLQ]
+  Q --> R[Github Issue Updater Lambda]
 ```
 
 ### Updating
 
 - ```shell
   nvm use || nvm install
+  npm ci
   npx npm-upgrade
   npm i
   npm ci
+  npm audit # examine output to see if any packages are vulnerable
   ```
 - Check to see if any later version is available in the `runtime: lambda.Runtime.NODEJS_...` line in the infra source files. If so, update and `npm run deploy`.
 - Run the Node Version Reporter lambda to see the exact node version that lambda would run:
+
   ```shell
   npm run jsversion
   # {...., "body":"\"Version: x.x.x\""} ...
   ```
+
   - If this is different from the value in `.mvnrc` then update `.nvmrc` with the new version and run `nvm install && npm ci`.
   - If this includes a major version upgrade, also update the `tsconfig` dependency and the `tsconfig.json` file, and also run `npm i` to rebuild the package lock file.
+
 - Run locally to test with `npm run run` (this will update confluence, but _won't_ modify the github board).

@@ -38,7 +38,7 @@ async function getCurrentPageInfo(pageUrl: string, token: string): Promise<[numb
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: 'Basic ' + token,
-      'User-Agent': 'Project Watcher',
+      'User-Agent': 'Github to Confluence Reporter',
     },
   })
   if (!previousVersion.ok) {
@@ -89,7 +89,7 @@ async function updatePage(
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: 'Basic ' + token,
-      'User-Agent': 'Project Watcher',
+      'User-Agent': 'Github to Confluence Reporter',
     },
     body,
   })

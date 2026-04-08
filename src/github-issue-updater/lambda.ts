@@ -1,7 +1,6 @@
-import { Handler } from 'aws-lambda/handler'
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { main } from '.'
 import { Config, config } from './config'
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
 
 interface SecretsPayload {
   atlassianBaseUrl: string
@@ -12,8 +11,9 @@ interface SecretsPayload {
   githubOrgName: string
 }
 
-export const handler: Handler = async () => {
-  const s3 = new S3Client({ region: config.awsRegion })
+const s3 = new S3Client({ region: config.awsRegion })
+
+export const handler = async (): Promise<void> => {
   const secretsFile = await s3.send(new GetObjectCommand({ Bucket: config.lambdaCredentialsBucketName, Key: config.lambdaCredentialsFilePath }))
   const secrets = JSON.parse((await secretsFile.Body?.transformToString()) ?? '{}') as SecretsPayload
 
@@ -26,5 +26,5 @@ export const handler: Handler = async () => {
     githubToken: secrets.githubToken,
     githubOrgName: secrets.githubOrgName,
   }
-  await main(cfg)
+  return main(cfg)
 }
