@@ -36,6 +36,15 @@ query FindBoardDetails($orgName: String!, $projectNumber: Int!) {
           }
         }
       }
+      reportedField: field(name: "Reported") {
+        ... on ProjectV2SingleSelectField {
+          id
+          options {
+            id
+            name
+          }
+        }
+      }
       projectField: field(name: "Project") {
         ... on ProjectV2Field {
           id
@@ -66,6 +75,10 @@ export interface GHBoardSpec {
   projectField: { id: string }
   jiraEpicField: { id: string }
   atlasProjectField: { id: string }
+  reportedField: {
+    id: string
+    options: Array<{ id: string; name: string }>
+  }
 }
 interface GHProjectBoardResponse {
   organization: {
@@ -120,6 +133,11 @@ query FindAllTicketsOnProjectBoard($orgName: String!, $projectNumber: Int!, $las
               name
             }
           }
+          reported: fieldValueByName(name: "Reported") {
+            ... on ProjectV2ItemFieldSingleSelectValue {
+              name
+            }
+          }
         }
       }
     }
@@ -143,6 +161,7 @@ interface GHProjectQueryResponse {
           jiraEpic: { text: string | null } | null
           atlasProject: { text: string | null } | null
           status: { name: string | null } | null
+          reported: { name: string | null } | null
         }>
       }
     }
@@ -156,6 +175,7 @@ export interface GHTicketSpec {
   jiraEpicGHField: string | null
   atlasProjectGHField: string | null
   status: string | null
+  reported: string | null
   title: string | null
 }
 async function getPageOfItemsFromGithub(
@@ -181,6 +201,7 @@ async function getPageOfItemsFromGithub(
         jiraEpicGHField: node.jiraEpic?.text ?? null,
         atlasProjectGHField: node.atlasProject?.text ?? null,
         status: node.status?.name ?? null,
+        reported: node.reported?.name ?? null,
         title: node.title?.text ?? null,
       }
     }),
@@ -199,8 +220,8 @@ export async function getAllItems(token: string, orgName: string, projectNumber:
   return issues
 }
 
-const moveIssueMutation = `
-mutation MoveIssueToStatus($projectId: ID!, $statusFieldId: ID!, $itemId: ID!, $newStatusId: String!) {
+const setSingleOptionMutation = `
+mutation SetSingleSelectOption($projectId: ID!, $statusFieldId: ID!, $itemId: ID!, $newStatusId: String!) {
   updateProjectV2ItemFieldValue(
     input: {
       projectId: $projectId
@@ -210,7 +231,7 @@ mutation MoveIssueToStatus($projectId: ID!, $statusFieldId: ID!, $itemId: ID!, $
     }
   ) {projectV2Item {id updatedAt}}
 }`
-interface GHMoveIssueToStatusMutationResponse {
+interface GHSetSingleSelectOptionMutationResponse {
   updateProjectV2ItemFieldValue: {
     projectV2Item: {
       id: string
@@ -218,15 +239,15 @@ interface GHMoveIssueToStatusMutationResponse {
     }
   }
 }
-export async function moveItemToDoneAndReported(
+export async function setSingleOptionField(
   token: string,
   projectId: string,
   statusFieldId: string,
   itemId: string,
   newStatusId: string,
 ): Promise<void> {
-  const result = (await queryGithubGraphQl(token, moveIssueMutation, { projectId, statusFieldId, itemId, newStatusId })) as {
-    data: GHMoveIssueToStatusMutationResponse
+  const result = (await queryGithubGraphQl(token, setSingleOptionMutation, { projectId, statusFieldId, itemId, newStatusId })) as {
+    data: GHSetSingleSelectOptionMutationResponse
   }
   if (result.data.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
     console.error('Unexpected ID: ', result.data.updateProjectV2ItemFieldValue)

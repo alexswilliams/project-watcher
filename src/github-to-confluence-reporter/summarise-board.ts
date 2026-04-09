@@ -21,6 +21,7 @@ export async function summariseBoardToConfluence(config: Config, page: Confluenc
       jiraEpic: it.parsedJiraEpic,
       atlasProject: it.parsedAtlasProject,
       status: it.status ?? 'Unknown',
+      reported: it.reported,
     }))
 
   if (config.canModifyConfluence) {
@@ -29,6 +30,6 @@ export async function summariseBoardToConfluence(config: Config, page: Confluenc
 
   if (config.canModifyBoard) {
     await githubBoard.archivePreviousReported(githubTickets, board, config)
-    await githubBoard.moveDoneToReported(githubTickets, board, config)
+    await githubBoard.moveToDoneAndReportedAndAddReportedLabel(githubTickets, board, config)
   } else console.log(' ! NOT moving tickets on github board.')
 }
