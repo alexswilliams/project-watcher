@@ -1,0 +1,58 @@
+query FindAllTicketsOnProjectBoard($orgName: String!, $projectNumber: Int!, $lastItem: String, $pageSize: Int!) {
+  organization(login: $orgName) {
+    projectV2(number: $projectNumber) {
+      items(first: $pageSize, after: $lastItem, orderBy: { direction: ASC, field: POSITION }) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        totalCount
+        nodes {
+          id
+          type
+          isArchived
+          title: fieldValueByName(name: "Title") {
+            ... on ProjectV2ItemFieldTextValue {
+              text
+            }
+          }
+          project: fieldValueByName(name: "Project") {
+            ... on ProjectV2ItemFieldTextValue {
+              text
+            }
+          }
+          jiraEpic: fieldValueByName(name: "Jira Epic") {
+            ... on ProjectV2ItemFieldTextValue {
+              text
+            }
+          }
+          atlasProject: fieldValueByName(name: "Atlas Project") {
+            ... on ProjectV2ItemFieldTextValue {
+              text
+            }
+          }
+          startDate: fieldValueByName(name: "Start Date") {
+            ... on ProjectV2ItemFieldDateValue {
+              date
+            }
+          }
+          endDate: fieldValueByName(name: "End Date") {
+            ... on ProjectV2ItemFieldDateValue {
+              date
+            }
+          }
+          status: fieldValueByName(name: "Status") {
+            ... on ProjectV2ItemFieldSingleSelectValue {
+              name
+            }
+          }
+          reported: fieldValueByName(name: "Reported") {
+            ... on ProjectV2ItemFieldSingleSelectValue {
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}

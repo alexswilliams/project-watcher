@@ -1,5 +1,5 @@
 import { Config } from './config'
-import * as github from './github'
+import * as github from '../common/github/github'
 
 export async function moveToDoneAndReportedAndAddReportedLabel(
   githubTickets: github.GHTicketSpec[],
@@ -20,7 +20,7 @@ export async function moveToDoneAndReportedAndAddReportedLabel(
 }
 
 export async function archivePreviousReported(githubTickets: github.GHTicketSpec[], projectBoard: github.GHBoardSpec, config: Config) {
-  const reportedTickets = githubTickets.filter(it => !it.isArchived).filter(it => it.status === 'Done & Reported' || it.reported === 'Reported')
+  const reportedTickets = githubTickets.filter(it => !it.isArchived).filter(it => it.status === 'Done & Reported' || it.reported === 'Reported') // TODO: remove Done & Reported
   for (const ticket of reportedTickets) {
     console.log(` * Archiving "${ticket.title}"`)
     await github.archiveIssue(config.githubToken, projectBoard.id, ticket.id)

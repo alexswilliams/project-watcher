@@ -1,5 +1,5 @@
 import { encode } from 'html-entities'
-import { Config, ConfluencePageDetails } from './config'
+import { Config, ConfluencePageDetails } from '../../github-to-confluence-reporter/config'
 
 interface TicketSpec {
   title: string

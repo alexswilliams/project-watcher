@@ -1,0 +1,53 @@
+query FindBoardDetails($orgName: String!, $projectNumber: Int!) {
+  organization(login: $orgName) {
+    projectV2(number: $projectNumber) {
+      id
+      title
+      number
+      url
+      statusField: field(name: "Status") {
+        ... on ProjectV2SingleSelectField {
+          id
+          options {
+            id
+            name
+          }
+        }
+      }
+      reportedField: field(name: "Reported") {
+        ... on ProjectV2SingleSelectField {
+          id
+          options {
+            id
+            name
+          }
+        }
+      }
+      startDateField: field(name: "Start Date") {
+        ... on ProjectV2Field {
+          id
+        }
+      }
+      endDateField: field(name: "End Date") {
+        ... on ProjectV2Field {
+          id
+        }
+      }
+      projectField: field(name: "Project") {
+        ... on ProjectV2Field {
+          id
+        }
+      }
+      jiraEpicField: field(name: "Jira Epic") {
+        ... on ProjectV2Field {
+          id
+        }
+      }
+      atlasProjectField: field(name: "Atlas Project") {
+        ... on ProjectV2Field {
+          id
+        }
+      }
+    }
+  }
+}

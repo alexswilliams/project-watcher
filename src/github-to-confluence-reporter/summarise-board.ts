@@ -1,8 +1,8 @@
 import { type Config, type ConfluencePageDetails } from './config'
-import { updateConfluence } from './confluence'
-import * as github from './github'
+import { updateConfluence } from '../common/confluence/confluence'
+import * as github from '../common/github/github'
 import * as githubBoard from './github-board'
-import { projectNameToHeadingData } from './parsers'
+import { projectNameToHeadingData } from '../common/parser/parsers'
 
 export async function summariseBoardToConfluence(config: Config, page: ConfluencePageDetails, githubProjectId: number) {
   const board = await github.getBoardDetails(config.githubToken, config.githubOrgName, githubProjectId)
