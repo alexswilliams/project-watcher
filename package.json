@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Runs actions against a github issues board on a set schedule",
   "scripts": {
+    "test": "vitest",
     "run": "CONFLUENCE_SPACE_NAME='ENG' GITHUB_PROJECT_TO_PAGE_MAPPINGS='{\"205\":{\"pageId\":\"231453462\",\"goalsUid\":\"482aaeaf-142c-416b-a7cd-eb6228de1505\",\"weeklyUid\":\"4ceae4f5-6037-413a-b266-6222debaeb32\"}}' ts-node src/github-to-confluence-reporter/index.ts",
     "synth": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk synth",
     "deploy": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk deploy --all",
@@ -14,8 +15,8 @@
   "author": "Alex Williams",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1027.0",
     "@aws-sdk/client-lambda": "3.1027.0",
+    "@aws-sdk/client-s3": "3.1027.0",
     "html-entities": "2.6.0",
     "node-fetch": "3.3.2",
     "typescript": "6.0.2"
@@ -26,6 +27,7 @@
     "cdk": "2.1118.0",
     "esbuild": "0.28.0",
     "prettier": "3.8.1",
-    "ts-node": "10.9.2"
+    "ts-node": "10.9.2",
+    "vitest": "4.1.3"
   }
 }

@@ -44,7 +44,8 @@ flowchart LR
   nvm use || nvm install
   npm ci
   npx npm-upgrade
-  npm i
+  rm package-lock.json
+  npm install
   npm ci
   npm audit # examine output to see if any packages are vulnerable
   ```
