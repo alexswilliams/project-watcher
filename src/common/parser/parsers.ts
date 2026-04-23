@@ -14,7 +14,7 @@ export function projectNameToHeadingData(it: string): {
   const jiraEpic = lastJiraGroup === -1 ? null : groups[lastJiraGroup].trim()
   const atlasProject = lastAltasGroup === -1 ? null : groups[lastAltasGroup].trim()
 
-  const headingText = /^(?<heading>.+)[-: ]*(:|- )/.exec(it)
+  const headingText = /^(?<heading>.{5,})[-: ]*(:|- )/.exec(it)
   return {
     parsedJiraEpic: jiraEpic,
     parsedAtlasProject: atlasProject,

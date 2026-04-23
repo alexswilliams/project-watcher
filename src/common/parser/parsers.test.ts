@@ -28,8 +28,16 @@ describe('Project Name Parser', () => {
         expectedOutput: { parsedJiraEpic: 'BLAH-123', parsedAtlasProject: null, parsedProjectName: 'Project Name' },
       },
       {
+        input: 'A: Project Name: BLAH-123',
+        expectedOutput: { parsedJiraEpic: 'BLAH-123', parsedAtlasProject: null, parsedProjectName: 'A: Project Name' },
+      },
+      {
         input: 'Project Name: BLAH-123, BOOPLING-12',
         expectedOutput: { parsedJiraEpic: 'BLAH-123', parsedAtlasProject: 'BOOPLING-12', parsedProjectName: 'Project Name' },
+      },
+      {
+        input: 'A: Project Name: BLAH-123, BOOPLING-12',
+        expectedOutput: { parsedJiraEpic: 'BLAH-123', parsedAtlasProject: 'BOOPLING-12', parsedProjectName: 'A: Project Name' },
       },
       {
         input: 'Project Name:BLAH-123, BOOPLING-12',
@@ -86,6 +94,10 @@ describe('Project Name Parser', () => {
       {
         input: 'Project Name - BOOPLING-12, BLAH-123',
         expectedOutput: { parsedJiraEpic: 'BLAH-123', parsedAtlasProject: 'BOOPLING-12', parsedProjectName: 'Project Name' },
+      },
+      {
+        input: '0: People Admin Tasks',
+        expectedOutput: { parsedJiraEpic: null, parsedAtlasProject: null, parsedProjectName: '0: People Admin Tasks' },
       },
     ])('Testing $input', scenario => {
       expect(projectNameToHeadingData(scenario.input)).toEqual(scenario.expectedOutput)

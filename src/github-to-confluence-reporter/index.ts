@@ -1,12 +1,12 @@
 import { type Config, config } from './config'
-import { summariseBoardToConfluence } from './summarise-board'
+import { summariseAndTidyBoard } from './summarise-board'
 
 export async function main(config: Config): Promise<void> {
   let lastError: unknown | null = null
   for (const [githubProjectId, confluencePageDetails] of Object.entries(config.projectBoardConfluenceMappings)) {
     try {
       console.info('Summarising board to confluence page: ', githubProjectId, confluencePageDetails)
-      await summariseBoardToConfluence(config, confluencePageDetails, Number(githubProjectId))
+      await summariseAndTidyBoard(config, confluencePageDetails, Number(githubProjectId))
     } catch (e: unknown) {
       lastError = e
       console.error('Failed to export board, skipping: ', githubProjectId, confluencePageDetails, e)

@@ -1,10 +1,10 @@
 import { type Config, type ConfluencePageDetails } from './config'
-import { updateConfluence } from '../common/confluence/confluence'
+import { updateConfluence } from './confluence-glue'
 import * as github from '../common/github/github'
 import * as githubBoard from './github-board'
 import { projectNameToHeadingData } from '../common/parser/parsers'
 
-export async function summariseBoardToConfluence(config: Config, page: ConfluencePageDetails, githubProjectId: number) {
+export async function summariseAndTidyBoard(config: Config, page: ConfluencePageDetails, githubProjectId: number) {
   const board = await github.getBoardDetails(config.githubToken, config.githubOrgName, githubProjectId)
   const githubTickets = await github.getAllItems(config.githubToken, config.githubOrgName, githubProjectId)
 
@@ -21,7 +21,7 @@ export async function summariseBoardToConfluence(config: Config, page: Confluenc
       jiraEpic: it.parsedJiraEpic,
       atlasProject: it.parsedAtlasProject,
       status: it.status ?? 'Unknown',
-      reported: it.reported,
+      reported: it.reported?.toLowerCase() === 'reported',
     }))
 
   if (config.canModifyConfluence) {
