@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+export ATLASSIAN_API_TOKEN=$(security find-generic-password -s ATLASSIAN_API_TOKEN -w)
+export GITHUB_PROJECTS_TOKEN=$(security find-generic-password -s GITHUB_PROJECTS_TOKEN -w)
+
+# export ATLASSIAN_BASE_URL='...'
+# export ATLAS_BASE_URL='...'
+# export ATLASSIAN_EMAIL='...'
+# export GITHUB_ORG_NAME='...'
