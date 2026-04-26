@@ -1,5 +1,5 @@
 export type ConfluencePageDetails = {
-  pageId: string
+  pageId: `${number}`
   goalsUid: string
   weeklyUid: string
 }

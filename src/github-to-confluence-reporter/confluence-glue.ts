@@ -37,7 +37,6 @@ export async function updateConfluence(tickets: TicketSpec[], config: Config, pa
     config.password,
     config.atlassianBaseUrl,
     currentPage.title,
-    currentPage.spaceKey,
     currentPage.version,
     newBody,
     execute,
@@ -47,12 +46,12 @@ export async function updateConfluence(tickets: TicketSpec[], config: Config, pa
 
 interface ConfluencePageInfo {
   version: number
-  spaceKey: string
+  spaceId: `${number}`
   title: string
 }
 
-async function getCurrentPageInfo(pageId: string, userEmail: string, apiToken: string, atlassianBaseUrl: string): Promise<ConfluencePageInfo> {
+async function getCurrentPageInfo(pageId: `${number}`, userEmail: string, apiToken: string, atlassianBaseUrl: string): Promise<ConfluencePageInfo> {
   console.log('Finding current page...')
   const pageInfo = await fetchPageContents(pageId, userEmail, apiToken, atlassianBaseUrl)
-  return { version: +pageInfo.version.number, spaceKey: pageInfo.space.key, title: pageInfo.title }
+  return { version: +pageInfo.version.number, spaceId: pageInfo.spaceId, title: pageInfo.title }
 }

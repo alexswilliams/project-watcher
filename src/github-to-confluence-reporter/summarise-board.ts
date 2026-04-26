@@ -24,9 +24,7 @@ export async function summariseAndTidyBoard(config: Config, page: ConfluencePage
       reported: it.reported?.toLowerCase() === 'reported',
     }))
 
-  if (config.canModifyConfluence) {
-    await updateConfluence(tickets, config, page)
-  } else console.log(' ! NOT updating confluence.')
+  await updateConfluence(tickets, config, page, config.canModifyConfluence)
 
   if (config.canModifyBoard) {
     await githubBoard.archivePreviousReported(githubTickets, board, config)

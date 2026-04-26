@@ -1,28 +1,3 @@
-interface ConfluenceAccountResponse {
-  accountId: string
-  email: string
-  [propName: string]: any
-}
-interface ConfluenceSpaceResponse {
-  id: number
-  key: string
-  alias: string
-  name: string
-  [propName: string]: any
-}
-interface ConfluencePageContentsResponse {
-  id: string
-  type: string
-  title: string
-  space: ConfluenceSpaceResponse
-  version: {
-    by: ConfluenceAccountResponse
-    when: string
-    number: number
-    [propName: string]: any
-  }
-}
-
 interface ConfluenceErrorResponse {
   statusCode: number
   data: {
@@ -39,13 +14,29 @@ interface ConfluenceErrorResponse {
   message: string
 }
 
+interface ConfluencePageSingle {
+  id: `${number}`
+  title: string
+  status: `current` | `archived` | `trashed` | `deleted` | `historical` | `draft`
+  spaceId: `${number}`
+  version: {
+    number: number
+    authorId: string // hex string
+    createdAt: string
+  }
+  _links: {
+    webui: `/${string}`
+    tinyui: `/x/${string}`
+    base: `https://${string}`
+  }
+}
 export async function fetchPageContents(
-  pageId: string,
+  pageId: `${number}`,
   userEmail: string,
   apiToken: string,
   atlassianBaseUrl: string,
-): Promise<ConfluencePageContentsResponse> {
-  const pageUrl = `${atlassianBaseUrl}/wiki/rest/api/content/${pageId}`
+): Promise<ConfluencePageSingle> {
+  const pageUrl = `${atlassianBaseUrl}/wiki/api/v2/pages/${pageId}?body-format=storage`
   const response = await fetch(pageUrl, {
     method: 'GET',
     headers: generateHeaders(userEmail, apiToken),
@@ -56,74 +47,59 @@ export async function fetchPageContents(
     console.error('Could not find page.\n', errorBody)
     throw Error('Could not find page: ' + errorBody.message)
   }
-  return (await response.json()) as ConfluencePageContentsResponse
+  const responseBody = await response.json()
+  console.log(responseBody)
+  return responseBody as ConfluencePageSingle
 }
 
-interface ConfluencePageEditResponse {
-  id: string
-  status: 'current' | 'draft' | 'archived' | 'historical' | 'trashed' | 'deleted' | 'any'
+interface ConfluencePageEditRequest {
+  id: `${number}`
+  status: `current` | `draft`
   title: string
-  space: ConfluenceSpaceResponse
-  container: ConfluenceSpaceResponse
-  ancestors: Array<unknown>
-  macroRenderedOutput: unknown
-  extensions: unknown
-  version: {
-    by: ConfluenceAccountResponse
-    when: string
-    number: number
-    [propName: string]: any
-  }
+  spaceId?: `${number}`
+  parentId?: `${number}`
   body: {
-    storage: {
-      value: string
-      representation: string
-      [propName: string]: any
-    }
+    representation: `storage` | `atlas_doc_format` | `wiki`
+    value: string
   }
-  _links: {
-    webui: `/${string}`
-    context: `/${string}`
-    tinyui: `/x/${string}`
-    base: `https://${string}`
-    [propName: string]: string
+  version: {
+    number: number
+    message: string
   }
 }
-
 export async function updatePage(
-  pageId: string,
+  pageId: `${number}`,
   userEmail: string,
   apiToken: string,
   atlassianBaseUrl: string,
   title: string,
-  spaceKey: string,
   currentVersion: number,
   body: string,
   execute: boolean,
 ): Promise<string> {
-  const requestPayload = JSON.stringify({
+  const requestPayload = {
     id: pageId,
-    type: 'page',
     title: title,
-    space: { key: spaceKey },
-    version: { number: currentVersion + 1 },
+    status: 'current',
     body: {
-      storage: {
-        value: body,
-        representation: 'storage',
-      },
+      representation: 'storage',
+      value: body,
     },
-  })
+    version: {
+      number: currentVersion + 1,
+      message: 'Update from script',
+    },
+  } as ConfluencePageEditRequest
 
-  const pageUrl = `${atlassianBaseUrl}/wiki/rest/api/content/${pageId}`
+  const pageUrl = `${atlassianBaseUrl}/wiki/api/v2/pages/${pageId}`
   if (!execute) {
-    console.info('Would have uploaded to confluence: ', pageUrl, requestPayload)
+    console.info('Would have uploaded to confluence: ', pageUrl, JSON.stringify(requestPayload, undefined, 2))
     return 'https://example.org'
   }
   const updateResponse = await fetch(pageUrl, {
     method: 'PUT',
-    headers: generateHeaders(userEmail, apiToken),
-    body: requestPayload,
+    headers: generateHeaders(userEmail, apiToken, true),
+    body: JSON.stringify(requestPayload),
   })
 
   if (!updateResponse.ok) {
@@ -132,7 +108,7 @@ export async function updatePage(
     throw Error('Could not post update: ' + errorBody.message)
   }
 
-  const responseBody = (await updateResponse.json()) as ConfluencePageEditResponse
+  const responseBody = (await updateResponse.json()) as ConfluencePageSingle
   return responseBody._links.base + responseBody._links.webui
 }
 
@@ -140,11 +116,11 @@ function generateRequestToken(userEmail: string, apiToken: string) {
   return Buffer.from(userEmail + ':' + apiToken).toString('base64')
 }
 
-function generateHeaders(userEmail: string, apiToken: string): import('undici-types').HeadersInit | undefined {
+function generateHeaders(userEmail: string, apiToken: string, hasBody: boolean = false): import('undici-types').HeadersInit | undefined {
   return {
     Accept: 'application/json',
-    'Content-Type': 'application/json',
     Authorization: 'Basic ' + generateRequestToken(userEmail, apiToken),
     'User-Agent': 'Github to Confluence Reporter',
+    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
   }
 }
