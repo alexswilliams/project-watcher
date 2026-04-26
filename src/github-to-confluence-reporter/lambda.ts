@@ -1,6 +1,7 @@
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import * as v from 'valibot'
 import { main } from '.'
-import { Config } from './config'
+import { Config, SecretsSchema } from './config'
 
 const awsConfig = {
   lambdaCredentialsBucketName: process.env.LAMBDA_CREDENTIALS_BUCKET_NAME ?? '',
@@ -8,21 +9,21 @@ const awsConfig = {
   awsRegion: process.env.AWS_REGION ?? '',
 }
 
-interface SecretsPayload {
-  atlassianBaseUrl: string
-  atlasBaseUrl: string
-  atlassianEmail: string
-  atlassianApiToken: string
-  githubToken: string
-  githubOrgName: string
-}
+v.is(
+  v.object({
+    lambdaCredentialsBucketName: v.pipe(v.string(), v.trim(), v.nonEmpty()),
+    lambdaCredentialsFilePath: v.pipe(v.string(), v.trim(), v.nonEmpty(), v.endsWith('.json')),
+    awsRegion: v.pipe(v.string(), v.regex(/^[a-z]{2}-[a-z]+[0-9]+$/), v.toLowerCase()),
+  }),
+  awsConfig,
+)
 
 const s3 = new S3Client({ region: awsConfig.awsRegion })
 
 export const handler = async (event: unknown): Promise<void> => {
   const command = new GetObjectCommand({ Bucket: awsConfig.lambdaCredentialsBucketName, Key: awsConfig.lambdaCredentialsFilePath })
   const secretsFile = await s3.send(command)
-  const secrets = JSON.parse((await secretsFile.Body?.transformToString()) ?? '{}') as SecretsPayload
+  const secrets = v.parse(SecretsSchema, await secretsFile.Body?.transformToString())
 
   const configWithOverrides = new Config({
     atlassianBaseUrl: secrets.atlassianBaseUrl,

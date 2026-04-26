@@ -1,38 +1,52 @@
+import * as v from 'valibot'
 import { AtlassianApiConfig } from '../common/confluence/raw-api'
 import { GithubApiConfig } from '../common/github/raw-api'
 
-export type ConfluencePageDetails = {
-  pageId: `${number}`
-  goalsUid: string
-  weeklyUid: string
-}
+export const SecretsSchema = v.object({
+  atlassianBaseUrl: v.pipe(v.string(), v.url(), v.regex(/^https:\/\/[a-z-]+\.atlassian\.net$/)),
+  atlasBaseUrl: v.pipe(v.string(), v.url(), v.regex(/^https:\/\/home\.atlassian\.com\/o\/[0-9a-f-]{36}\/s\/[0-9a-f-]{36}$/)),
+  atlassianEmail: v.pipe(v.string(), v.email()),
+  atlassianApiToken: v.pipe(v.string(), v.startsWith('ATAT')),
 
-interface RawConfig {
-  atlassianBaseUrl: string
-  atlasBaseUrl: string
-  atlassianEmail: string
-  atlassianApiToken: string
-  canModifyConfluence: boolean
+  githubToken: v.pipe(v.string(), v.startsWith('github_pat_')),
+  githubOrgName: v.pipe(v.string(), v.nonEmpty()),
+})
 
-  githubToken: string
-  githubOrgName: string
-  githubEndpoint: string
-  canModifyBoard: boolean
+const ConfluencePageDetailsSchema = v.object({
+  pageId: v.pipe(
+    v.string(),
+    v.nonEmpty(),
+    v.digits(),
+    v.transform(it => it as `${number}`),
+  ),
+  goalsUid: v.pipe(v.string(), v.uuid()),
+  weeklyUid: v.pipe(v.string(), v.uuid()),
+})
+export type ConfluencePageDetails = v.InferOutput<typeof ConfluencePageDetailsSchema>
 
-  projectBoardConfluenceMappings: { [key: string]: ConfluencePageDetails }
-}
+const ProjectBoardMappingSchema = v.record(v.pipe(v.string(), v.nonEmpty(), v.digits()), ConfluencePageDetailsSchema)
 
-const configFromEnvironment: RawConfig = {
+const RawConfigSchema = v.object({
+  ...SecretsSchema.entries,
+
+  githubEndpoint: v.pipe(v.string(), v.url()),
+  canModifyConfluence: v.boolean(),
+  canModifyBoard: v.boolean(),
+
+  projectBoardConfluenceMappings: ProjectBoardMappingSchema,
+})
+
+const configFromEnvironment: v.InferOutput<typeof RawConfigSchema> = {
   atlassianBaseUrl: process.env.ATLASSIAN_BASE_URL ?? '',
   atlasBaseUrl: process.env.ATLAS_BASE_URL ?? '',
   atlassianEmail: process.env.ATLASSIAN_EMAIL ?? '',
   atlassianApiToken: process.env.ATLASSIAN_API_TOKEN ?? '',
-  canModifyConfluence: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE ?? 'false').toLowerCase() === 'true',
+  canModifyConfluence: (process.env.CAN_MODIFY_CONFLUENCE ?? 'false').toLowerCase() === 'true',
 
   githubToken: process.env.GITHUB_PROJECTS_TOKEN ?? '',
   githubOrgName: process.env.GITHUB_ORG_NAME ?? '',
   githubEndpoint: process.env.GITHUB_ENDPOINT ?? 'https://api.github.com/graphql',
-  canModifyBoard: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_GITHUB_BOARD ?? 'false').toLowerCase() === 'true',
+  canModifyBoard: (process.env.CAN_MODIFY_GITHUB_BOARD ?? 'false').toLowerCase() === 'true',
 
   projectBoardConfluenceMappings: JSON.parse(process.env.GITHUB_PROJECT_TO_PAGE_MAPPINGS ?? '{}'),
 
@@ -40,13 +54,16 @@ const configFromEnvironment: RawConfig = {
 }
 
 export class Config {
-  public boardToPageMappings: Readonly<{ [key: string]: Readonly<ConfluencePageDetails> }>
+  public boardToPageMappings: v.InferOutput<typeof ProjectBoardMappingSchema>
 
   public confluenceApiConfig: Readonly<AtlassianApiConfig>
   public githubApiConfig: Readonly<GithubApiConfig>
 
-  constructor(overrides: Partial<RawConfig> = {}) {
+  constructor(overrides: Partial<v.InferOutput<typeof RawConfigSchema>> = {}) {
     const result = { ...configFromEnvironment, ...overrides }
+
+    v.is(RawConfigSchema, result)
+
     this.boardToPageMappings = result.projectBoardConfluenceMappings
     this.confluenceApiConfig = {
       readOnly: !result.canModifyConfluence,

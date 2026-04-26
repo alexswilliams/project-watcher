@@ -51,8 +51,8 @@ export class GithubToConfluenceReporterStack extends Stack {
       timeout: Duration.seconds(30),
       logGroup: logGroup,
       environment: {
-        GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE: 'true',
-        GITHUB_PROJECT_JOB_CAN_MODIFY_GITHUB_BOARD: 'true',
+        CAN_MODIFY_CONFLUENCE: 'true',
+        CAN_MODIFY_GITHUB_BOARD: 'true',
         GITHUB_PROJECT_TO_PAGE_MAPPINGS: JSON.stringify({
           '205': {
             pageId: '231453462',
@@ -60,7 +60,6 @@ export class GithubToConfluenceReporterStack extends Stack {
             weeklyUid: '4ceae4f5-6037-413a-b266-6222debaeb32',
           },
         }),
-        CONFLUENCE_SPACE_NAME: 'ENG',
         LAMBDA_CREDENTIALS_BUCKET_NAME: commonStack.credentialBucketName(),
         LAMBDA_CREDENTIALS_FILE_PATH: commonStack.credentialsFilePath,
         // AWS_REGION: this.region, // predefined by lambda runtime
