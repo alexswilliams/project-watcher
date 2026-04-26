@@ -1,3 +1,4 @@
+import * as v from 'valibot'
 import { GithubApiConfig, mutateGithubGraphQl } from './raw-api'
 
 const graphql = String.raw
@@ -13,9 +14,10 @@ const setSingleOptionMutation = graphql`
     }
   }
 `
-interface GHSetSingleSelectOptionMutationResponse {
-  updateProjectV2ItemFieldValue: { projectV2Item: { id: string } }
-}
+const GHSetSingleSelectOptionMutationResponseSchema = v.object({
+  updateProjectV2ItemFieldValue: v.object({ projectV2Item: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }) }),
+})
+
 export async function setSingleOptionField(
   apiConfig: GithubApiConfig,
   projectId: string,
@@ -23,7 +25,7 @@ export async function setSingleOptionField(
   itemId: string,
   newValue: string,
 ): Promise<void> {
-  const result = await mutateGithubGraphQl<GHSetSingleSelectOptionMutationResponse>(
+  const result = await mutateGithubGraphQl(
     apiConfig,
     setSingleOptionMutation,
     {
@@ -32,6 +34,7 @@ export async function setSingleOptionField(
       itemId,
       newValue,
     },
+    GHSetSingleSelectOptionMutationResponseSchema,
     () => ({
       updateProjectV2ItemFieldValue: {
         projectV2Item: {
@@ -40,8 +43,8 @@ export async function setSingleOptionField(
       },
     }),
   )
-  if (result.data.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
-    console.error('Unexpected ID: ', result.data.updateProjectV2ItemFieldValue)
+  if (result.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
+    console.error('Unexpected ID: ', result.updateProjectV2ItemFieldValue)
     throw Error('Unpexted ID returned when updating status of ' + itemId)
   }
 }
@@ -55,11 +58,11 @@ const setFieldTextIssueMutation = graphql`
     }
   }
 `
-interface GHSetFieldTextMutationResponse {
-  updateProjectV2ItemFieldValue: { projectV2Item: { id: string } }
-}
+const GHSetFieldTextMutationResponseSchema = v.object({
+  updateProjectV2ItemFieldValue: v.object({ projectV2Item: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }) }),
+})
 export async function setFieldText(apiConfig: GithubApiConfig, projectId: string, fieldId: string, itemId: string, newValue: string): Promise<void> {
-  const result = await mutateGithubGraphQl<GHSetFieldTextMutationResponse>(
+  const result = await mutateGithubGraphQl(
     apiConfig,
     setFieldTextIssueMutation,
     {
@@ -68,6 +71,7 @@ export async function setFieldText(apiConfig: GithubApiConfig, projectId: string
       itemId,
       newValue,
     },
+    GHSetFieldTextMutationResponseSchema,
     () => ({
       updateProjectV2ItemFieldValue: {
         projectV2Item: {
@@ -76,8 +80,8 @@ export async function setFieldText(apiConfig: GithubApiConfig, projectId: string
       },
     }),
   )
-  if (result.data.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
-    console.error('Unexpected ID: ', result.data.updateProjectV2ItemFieldValue)
+  if (result.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
+    console.error('Unexpected ID: ', result.updateProjectV2ItemFieldValue)
     throw Error('Unpexted ID returned when updating field value of ' + itemId)
   }
 }
@@ -92,22 +96,24 @@ const archiveIssueMutation = graphql`
     }
   }
 `
-interface GHArchiveIssueMutationResponse {
-  archiveProjectV2Item: {
-    item: {
-      id: string
-      isArchived: boolean
-    }
-  }
-}
+
+const GHArchiveIssueMutationResponseSchema = v.object({
+  archiveProjectV2Item: v.object({
+    item: v.object({
+      id: v.pipe(v.string(), v.nonEmpty()),
+      isArchived: v.boolean(),
+    }),
+  }),
+})
 export async function archiveIssue(apiConfig: GithubApiConfig, projectId: string, itemId: string): Promise<void> {
-  const result = await mutateGithubGraphQl<GHArchiveIssueMutationResponse>(
+  const result = await mutateGithubGraphQl(
     apiConfig,
     archiveIssueMutation,
     {
       projectId: projectId,
       itemId: itemId,
     },
+    GHArchiveIssueMutationResponseSchema,
     () => ({
       archiveProjectV2Item: {
         item: {
@@ -117,8 +123,8 @@ export async function archiveIssue(apiConfig: GithubApiConfig, projectId: string
       },
     }),
   )
-  if (result.data.archiveProjectV2Item.item.id !== itemId || result.data.archiveProjectV2Item.item.isArchived === false) {
-    console.error('Unexpected result when archiving: ', result.data.archiveProjectV2Item)
+  if (result.archiveProjectV2Item.item.id !== itemId || result.archiveProjectV2Item.item.isArchived === false) {
+    console.error('Unexpected result when archiving: ', result.archiveProjectV2Item)
     throw Error('Unpexted result returned when archiving ' + itemId)
   }
 }
