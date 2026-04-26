@@ -1,3 +1,5 @@
+import * as v from 'valibot'
+
 export interface AtlassianApiConfig {
   readOnly: boolean
   userEmail: string
@@ -22,24 +24,32 @@ interface ConfluenceErrorResponse {
   message: string
 }
 
-interface ConfluencePageSingle {
-  id: `${number}`
-  title: string
-  status: `current` | `archived` | `trashed` | `deleted` | `historical` | `draft`
-  spaceId: `${number}`
-  version: {
-    number: number
-    message: string
-    authorId: string // hex string
-    createdAt: string
-  }
-  _links: {
-    webui: `/${string}`
-    tinyui: `/x/${string}`
-    base: `https://${string}`
-  }
-}
-export async function fetchPageContents(apiConfig: AtlassianApiConfig, pageId: `${number}`): Promise<ConfluencePageSingle> {
+const stringIdentifier = v.pipe(
+  v.string(),
+  v.nonEmpty(),
+  v.digits(),
+  v.guard((it): it is `${number}` => true),
+)
+const PageSingleSchema = v.object({
+  id: stringIdentifier,
+  title: v.pipe(v.string(), v.nonEmpty()),
+  status: v.picklist(['current', 'archived', 'trashed', 'deleted', 'historical', 'draft']),
+  spaceId: stringIdentifier,
+  version: v.object({
+    number: v.number(),
+    message: v.string(),
+    authorId: v.pipe(v.string(), v.hexadecimal()),
+    createdAt: v.pipe(v.string(), v.isoTimestamp()),
+  }),
+  _links: v.looseObject({
+    webui: v.pipe(v.string(), v.startsWith('/')),
+    tinyui: v.pipe(v.string(), v.startsWith('/x/')),
+    base: v.pipe(v.string(), v.url(), v.startsWith('https://')),
+  }),
+})
+type PageSingle = v.InferOutput<typeof PageSingleSchema>
+
+export async function fetchPageContents(apiConfig: AtlassianApiConfig, pageId: `${number}`): Promise<PageSingle> {
   const pageUrl = `${apiConfig.atlassianBaseUrl}/wiki/api/v2/pages/${pageId}?body-format=storage`
   const response = await fetch(pageUrl, {
     method: 'GET',
@@ -52,8 +62,7 @@ export async function fetchPageContents(apiConfig: AtlassianApiConfig, pageId: `
     console.error('Could not find page.\n', errorBody)
     throw Error('Could not find page: ' + errorBody.message)
   }
-  const responseBody = (await response.json()) as ConfluencePageSingle
-  return responseBody
+  return v.parse(PageSingleSchema, await response.json())
 }
 
 interface ConfluencePageEditRequest {
@@ -110,7 +119,7 @@ export async function updatePage(
     throw Error('Could not update page: ' + errorBody.message)
   }
 
-  const responseBody = (await updateResponse.json()) as ConfluencePageSingle
+  const responseBody = v.parse(PageSingleSchema, await updateResponse.json())
   return responseBody._links.base + responseBody._links.webui
 }
 
