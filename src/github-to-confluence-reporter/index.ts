@@ -1,9 +1,9 @@
-import { type Config, config } from './config'
+import { Config } from './config'
 import { summariseAndTidyBoard } from './summarise-board'
 
 export async function main(config: Config): Promise<void> {
   let lastError: unknown | null = null
-  for (const [githubProjectId, confluencePageDetails] of Object.entries(config.projectBoardConfluenceMappings)) {
+  for (const [githubProjectId, confluencePageDetails] of Object.entries(config.boardToPageMappings)) {
     try {
       console.info('Summarising board to confluence page: ', githubProjectId, confluencePageDetails)
       await summariseAndTidyBoard(config, confluencePageDetails, Number(githubProjectId))
@@ -19,7 +19,7 @@ export async function main(config: Config): Promise<void> {
   console.info('Completed successfully')
 }
 
-// Only the lambda sets the credential bucket name.  The lambda will invoke `main`.  If running on the CLI, we have to do it manually.
-if (config.lambdaCredentialsBucketName === '') {
-  main(config)
+// Only the lambda sets the AWS region.  The lambda will invoke `main`.  If running on the CLI, we have to do it manually.
+if ((process.env.AWS_REGION ?? '') === '') {
+  main(new Config())
 }

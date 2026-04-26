@@ -1,6 +1,6 @@
-import path from 'path'
 import fs from 'fs'
-import { queryGithubGraphQl, queryGithubGraphQlPaged } from './raw-api'
+import path from 'path'
+import { GithubApiConfig, queryGithubGraphQl, queryGithubGraphQlPaged } from './raw-api'
 
 function loadQuery(filename: string): string {
   return fs.readFileSync(path.join(__dirname, filename), { encoding: 'utf8' })
@@ -29,9 +29,9 @@ interface GHProjectBoardResponse {
     projectV2: GHBoardSpec
   }
 }
-export async function getBoardDetails(token: string, orgName: string, projectNumber: number): Promise<GHBoardSpec> {
-  const project = await queryGithubGraphQl<GHProjectBoardResponse>(token, boardQuery, {
-    orgName: orgName,
+export async function getBoardDetails(apiConfig: GithubApiConfig, projectNumber: number): Promise<GHBoardSpec> {
+  const project = await queryGithubGraphQl<GHProjectBoardResponse>(apiConfig, boardQuery, {
+    orgName: apiConfig.orgName,
     projectNumber: projectNumber,
   })
   return project.data.organization.projectV2
@@ -76,9 +76,9 @@ export interface GHTicketSpec {
   reported: string | null
   title: string | null
 }
-export async function getAllItems(token: string, orgName: string, projectNumber: number): Promise<GHTicketSpec[]> {
+export async function getAllItems(apiConfig: GithubApiConfig, projectNumber: number): Promise<GHTicketSpec[]> {
   const issues: GHTicketSpec[] = []
-  await queryGithubGraphQlPaged<GHProjectQueryResponse>(token, projectQuery, { orgName, projectNumber }, payload => {
+  await queryGithubGraphQlPaged<GHProjectQueryResponse>(apiConfig, projectQuery, { orgName: apiConfig.orgName, projectNumber }, payload => {
     const itemsRoot = payload.organization.projectV2.items
     issues.push(
       ...itemsRoot.nodes.map(node => ({

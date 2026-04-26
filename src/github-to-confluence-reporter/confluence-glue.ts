@@ -1,5 +1,5 @@
-import { Config, ConfluencePageDetails } from './config'
-import { fetchPageContents, updatePage } from '../common/confluence/raw-api'
+import { AtlassianApiConfig, fetchPageContents, updatePage } from '../common/confluence/raw-api'
+import { ConfluencePageDetails } from './config'
 import { renderPageBody } from './confluence-renderer'
 
 export interface TicketSpec {
@@ -20,27 +20,18 @@ const isInProgress = (it: TicketSpec): boolean => it.status.toLowerCase() === IN
 const isBlocked = (it: TicketSpec): boolean => it.status.toLowerCase() === BLOCKED_STATUS.toLowerCase()
 const isDone = (it: TicketSpec): boolean => it.status.toLowerCase() === DONE_STATUS.toLowerCase()
 
-export async function updateConfluence(tickets: TicketSpec[], config: Config, page: ConfluencePageDetails, execute: boolean = true) {
+export async function updateConfluence(apiConfig: AtlassianApiConfig, tickets: TicketSpec[], page: ConfluencePageDetails) {
   const nextUp = tickets.filter(it => isToDo(it))
   const now = tickets.filter(it => isInProgress(it) || isBlocked(it))
   const recentlyDone = tickets.filter(it => isDone(it) && !it.reported)
 
-  const newBody = renderPageBody(config.atlassianBaseUrl, config.atlasBaseUrl, nextUp, now, recentlyDone, page.goalsUid, page.weeklyUid)
+  const newBody = renderPageBody(apiConfig.atlassianBaseUrl, apiConfig.atlasBaseUrl, nextUp, now, recentlyDone, page.goalsUid, page.weeklyUid)
 
-  const currentPage = await getCurrentPageInfo(page.pageId, config.username, config.password, config.atlassianBaseUrl)
+  const currentPage = await getCurrentPageInfo(apiConfig, page.pageId)
   console.log('Found page "' + currentPage.title + '" with version number: ' + currentPage.version)
 
   console.log('Updating page with new body and revision number: ' + (currentPage.version + 1))
-  const webUiLink = await updatePage(
-    page.pageId,
-    config.username,
-    config.password,
-    config.atlassianBaseUrl,
-    currentPage.title,
-    currentPage.version,
-    newBody,
-    execute,
-  )
+  const webUiLink = await updatePage(apiConfig, page.pageId, currentPage.title, currentPage.version, newBody)
   console.log('Page successfully updated.  View it here: ' + webUiLink)
 }
 
@@ -50,8 +41,8 @@ interface ConfluencePageInfo {
   title: string
 }
 
-async function getCurrentPageInfo(pageId: `${number}`, userEmail: string, apiToken: string, atlassianBaseUrl: string): Promise<ConfluencePageInfo> {
+async function getCurrentPageInfo(apiConfig: AtlassianApiConfig, pageId: `${number}`): Promise<ConfluencePageInfo> {
   console.log('Finding current page...')
-  const pageInfo = await fetchPageContents(pageId, userEmail, apiToken, atlassianBaseUrl)
+  const pageInfo = await fetchPageContents(apiConfig, pageId)
   return { version: +pageInfo.version.number, spaceId: pageInfo.spaceId, title: pageInfo.title }
 }

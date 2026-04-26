@@ -1,12 +1,12 @@
-import { type Config, type ConfluencePageDetails } from './config'
-import { updateConfluence } from './confluence-glue'
 import * as github from '../common/github/github'
-import * as githubBoard from './github-board'
 import { projectNameToHeadingData } from '../common/parser/parsers'
+import { type ConfluencePageDetails, Config } from './config'
+import { updateConfluence } from './confluence-glue'
+import * as githubBoard from './github-board'
 
 export async function summariseAndTidyBoard(config: Config, page: ConfluencePageDetails, githubProjectId: number) {
-  const board = await github.getBoardDetails(config.githubToken, config.githubOrgName, githubProjectId)
-  const githubTickets = await github.getAllItems(config.githubToken, config.githubOrgName, githubProjectId)
+  const board = await github.getBoardDetails(config.githubApiConfig, githubProjectId)
+  const githubTickets = await github.getAllItems(config.githubApiConfig, githubProjectId)
 
   const githubTicketsWithParsedHeader = githubTickets.map(it => {
     const fieldsFromProject = projectNameToHeadingData(it.projectGHField ?? 'Project Work')
@@ -24,10 +24,8 @@ export async function summariseAndTidyBoard(config: Config, page: ConfluencePage
       reported: it.reported?.toLowerCase() === 'reported',
     }))
 
-  await updateConfluence(tickets, config, page, config.canModifyConfluence)
+  await updateConfluence(config.confluenceApiConfig, tickets, page)
 
-  if (config.canModifyBoard) {
-    await githubBoard.archivePreviousReported(githubTickets, board, config)
-    await githubBoard.moveToDoneAndReportedAndAddReportedLabel(githubTickets, board, config)
-  } else console.log(' ! NOT moving tickets on github board.')
+  await githubBoard.archivePreviousReported(config.githubApiConfig, githubTickets, board)
+  await githubBoard.moveToDoneAndReportedAndAddReportedLabel(config.githubApiConfig, githubTickets, board)
 }

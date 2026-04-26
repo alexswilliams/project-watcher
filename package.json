@@ -4,7 +4,7 @@
   "description": "Runs actions against a github issues board on a set schedule",
   "scripts": {
     "test": "vitest",
-    "run": "CONFLUENCE_SPACE_NAME='ENG' GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE='false' GITHUB_PROJECT_TO_PAGE_MAPPINGS='{\"205\":{\"pageId\":\"1723531824\",\"goalsUid\":\"482aaeaf-142c-416b-a7cd-eb6228de1506\",\"weeklyUid\":\"4ceae4f5-6037-413a-b266-6222debaeb33\"}}' ts-node src/github-to-confluence-reporter/index.ts",
+    "run": "CONFLUENCE_SPACE_NAME='ENG' GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE='true' GITHUB_PROJECT_TO_PAGE_MAPPINGS='{\"205\":{\"pageId\":\"1723531824\",\"goalsUid\":\"482aaeaf-142c-416b-a7cd-eb6228de1506\",\"weeklyUid\":\"4ceae4f5-6037-413a-b266-6222debaeb33\"}}' ts-node src/github-to-confluence-reporter/index.ts",
     "synth": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk synth",
     "deploy": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk deploy --all",
     "cdk": "AWS_REGION=eu-west-1 AWS_PROFILE=personal_work_integrations npx cdk",

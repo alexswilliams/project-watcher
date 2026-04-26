@@ -1,42 +1,65 @@
+import { AtlassianApiConfig } from '../common/confluence/raw-api'
+import { GithubApiConfig } from '../common/github/raw-api'
+
 export type ConfluencePageDetails = {
   pageId: `${number}`
   goalsUid: string
   weeklyUid: string
 }
-export type ProjectBoardToPageMapping = {
-  [key: string]: ConfluencePageDetails
-}
 
-export interface Config {
-  canModifyConfluence: boolean
-  canModifyBoard: boolean
+interface RawConfig {
   atlassianBaseUrl: string
   atlasBaseUrl: string
-  username: string
-  password: string
-  spaceName: string
+  atlassianEmail: string
+  atlassianApiToken: string
+  canModifyConfluence: boolean
+
   githubToken: string
   githubOrgName: string
-  projectBoardConfluenceMappings: ProjectBoardToPageMapping
-  lambdaCredentialsBucketName: string
-  lambdaCredentialsFilePath: string
-  awsRegion: string
+  githubEndpoint: string
+  canModifyBoard: boolean
+
+  projectBoardConfluenceMappings: { [key: string]: ConfluencePageDetails }
 }
-export const config: Config = {
-  canModifyConfluence: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE ?? 'false').toLowerCase() === 'true',
-  canModifyBoard: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_GITHUB_BOARD ?? 'false').toLowerCase() === 'true',
+
+const configFromEnvironment: RawConfig = {
   atlassianBaseUrl: process.env.ATLASSIAN_BASE_URL ?? '',
   atlasBaseUrl: process.env.ATLAS_BASE_URL ?? '',
-  username: process.env.ATLASSIAN_EMAIL ?? '',
-  password: process.env.ATLASSIAN_API_TOKEN ?? '',
-  spaceName: process.env.CONFLUENCE_SPACE_NAME!!,
+  atlassianEmail: process.env.ATLASSIAN_EMAIL ?? '',
+  atlassianApiToken: process.env.ATLASSIAN_API_TOKEN ?? '',
+  canModifyConfluence: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE ?? 'false').toLowerCase() === 'true',
 
   githubToken: process.env.GITHUB_PROJECTS_TOKEN ?? '',
   githubOrgName: process.env.GITHUB_ORG_NAME ?? '',
+  githubEndpoint: process.env.GITHUB_ENDPOINT ?? 'https://api.github.com/graphql',
+  canModifyBoard: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_GITHUB_BOARD ?? 'false').toLowerCase() === 'true',
 
   projectBoardConfluenceMappings: JSON.parse(process.env.GITHUB_PROJECT_TO_PAGE_MAPPINGS ?? '{}'),
 
-  lambdaCredentialsBucketName: process.env.LAMBDA_CREDENTIALS_BUCKET_NAME ?? '',
-  lambdaCredentialsFilePath: process.env.LAMBDA_CREDENTIALS_FILE_PATH ?? '',
-  awsRegion: process.env.AWS_REGION ?? '',
+  // Note: AWS-specific config is handled separately within the lambda bootstrap
+}
+
+export class Config {
+  public boardToPageMappings: Readonly<{ [key: string]: Readonly<ConfluencePageDetails> }>
+
+  public confluenceApiConfig: Readonly<AtlassianApiConfig>
+  public githubApiConfig: Readonly<GithubApiConfig>
+
+  constructor(overrides: Partial<RawConfig> = {}) {
+    const result = { ...configFromEnvironment, ...overrides }
+    this.boardToPageMappings = result.projectBoardConfluenceMappings
+    this.confluenceApiConfig = {
+      readOnly: !result.canModifyConfluence,
+      userEmail: result.atlassianEmail,
+      apiToken: result.atlassianApiToken,
+      atlassianBaseUrl: result.atlassianBaseUrl,
+      atlasBaseUrl: result.atlasBaseUrl,
+    }
+    this.githubApiConfig = {
+      readOnly: !result.canModifyBoard,
+      apiToken: result.githubToken,
+      orgName: result.githubOrgName,
+      endpoint: result.githubEndpoint,
+    }
+  }
 }

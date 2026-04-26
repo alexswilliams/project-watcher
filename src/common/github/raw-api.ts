@@ -1,3 +1,10 @@
+export interface GithubApiConfig {
+  readOnly: boolean
+  apiToken: string
+  orgName: string
+  endpoint: string
+}
+
 export interface GHQueryResponse<T> {
   data: T
   errors?: Array<GHQueryErrorResponse>
@@ -9,17 +16,30 @@ export interface GHQueryErrorResponse {
   message: string
 }
 
-export async function queryGithubGraphQl<TReturnBody>(
-  token: string,
+export async function mutateGithubGraphQl<TReturnBody>(
+  apiConfig: GithubApiConfig,
   query: string,
   variables: Record<string, any>,
-  endpoint: string = 'https://api.github.com/graphql',
+  responseIfReadOnly: () => TReturnBody,
 ): Promise<GHQueryResponse<TReturnBody>> {
-  const response = await fetch(endpoint, {
+  if (apiConfig.readOnly) {
+    console.info('Would have made mutation: ', JSON.stringify({ query, variables }))
+    return { data: responseIfReadOnly() }
+  }
+  throw Error('should be read-only')
+  return queryGithubGraphQl(apiConfig, query, variables)
+}
+
+export async function queryGithubGraphQl<TReturnBody>(
+  apiConfig: GithubApiConfig,
+  query: string,
+  variables: Record<string, any>,
+): Promise<GHQueryResponse<TReturnBody>> {
+  const response = await fetch(apiConfig.endpoint, {
     method: 'POST',
     headers: {
       Accept: 'Accept: application/vnd.github+json',
-      Authorization: 'Bearer ' + token,
+      Authorization: 'Bearer ' + apiConfig.apiToken,
     },
     body: JSON.stringify({ query, variables }),
   })
@@ -37,16 +57,15 @@ export async function queryGithubGraphQl<TReturnBody>(
 }
 
 export async function queryGithubGraphQlPaged<TReturnBody>(
-  token: string,
+  apiConfig: GithubApiConfig,
   query: string,
   variables: Record<string, unknown>,
   consumePage: (payload: TReturnBody) => Record<string, unknown> | null, // return record to merge into variables in order to request next page; or null to finish here
   pageSize: number = 100,
-  endpoint: string = 'https://api.github.com/graphql',
 ): Promise<void> {
   let nextPage: Record<string, unknown> | null = {}
   do {
-    const responseBody = await queryGithubGraphQl<TReturnBody>(token, query, { ...variables, ...nextPage, pageSize }, endpoint)
+    const responseBody = await queryGithubGraphQl<TReturnBody>(apiConfig, query, { ...variables, ...nextPage, pageSize })
     nextPage = consumePage(responseBody.data)
   } while (nextPage !== null)
 }

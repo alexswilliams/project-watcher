@@ -1,3 +1,11 @@
+export interface AtlassianApiConfig {
+  readOnly: boolean
+  userEmail: string
+  apiToken: string
+  atlassianBaseUrl: string
+  atlasBaseUrl: string
+}
+
 interface ConfluenceErrorResponse {
   statusCode: number
   data: {
@@ -21,6 +29,7 @@ interface ConfluencePageSingle {
   spaceId: `${number}`
   version: {
     number: number
+    message: string
     authorId: string // hex string
     createdAt: string
   }
@@ -30,26 +39,21 @@ interface ConfluencePageSingle {
     base: `https://${string}`
   }
 }
-export async function fetchPageContents(
-  pageId: `${number}`,
-  userEmail: string,
-  apiToken: string,
-  atlassianBaseUrl: string,
-): Promise<ConfluencePageSingle> {
-  const pageUrl = `${atlassianBaseUrl}/wiki/api/v2/pages/${pageId}?body-format=storage`
+export async function fetchPageContents(apiConfig: AtlassianApiConfig, pageId: `${number}`): Promise<ConfluencePageSingle> {
+  const pageUrl = `${apiConfig.atlassianBaseUrl}/wiki/api/v2/pages/${pageId}?body-format=storage`
   const response = await fetch(pageUrl, {
     method: 'GET',
-    headers: generateHeaders(userEmail, apiToken),
+    headers: generateHeaders(apiConfig),
   })
 
   if (!response.ok) {
+    console.error('Could not find page.  Attempting to resolve error response...', response.status, response.statusText)
     const errorBody = (await response.json()) as ConfluenceErrorResponse
     console.error('Could not find page.\n', errorBody)
     throw Error('Could not find page: ' + errorBody.message)
   }
-  const responseBody = await response.json()
-  console.log(responseBody)
-  return responseBody as ConfluencePageSingle
+  const responseBody = (await response.json()) as ConfluencePageSingle
+  return responseBody
 }
 
 interface ConfluencePageEditRequest {
@@ -68,14 +72,11 @@ interface ConfluencePageEditRequest {
   }
 }
 export async function updatePage(
+  apiConfig: AtlassianApiConfig,
   pageId: `${number}`,
-  userEmail: string,
-  apiToken: string,
-  atlassianBaseUrl: string,
   title: string,
   currentVersion: number,
   body: string,
-  execute: boolean,
 ): Promise<string> {
   const requestPayload = {
     id: pageId,
@@ -91,21 +92,22 @@ export async function updatePage(
     },
   } as ConfluencePageEditRequest
 
-  const pageUrl = `${atlassianBaseUrl}/wiki/api/v2/pages/${pageId}`
-  if (!execute) {
+  const pageUrl = `${apiConfig.atlassianBaseUrl}/wiki/api/v2/pages/${pageId}`
+  if (apiConfig.readOnly) {
     console.info('Would have uploaded to confluence: ', pageUrl, JSON.stringify(requestPayload, undefined, 2))
     return 'https://example.org'
   }
   const updateResponse = await fetch(pageUrl, {
     method: 'PUT',
-    headers: generateHeaders(userEmail, apiToken, true),
+    headers: generateHeaders(apiConfig, true),
     body: JSON.stringify(requestPayload),
   })
 
   if (!updateResponse.ok) {
+    console.error('Could not update page.  Attempting to resolve error response...', updateResponse.status, updateResponse.statusText)
     const errorBody = (await updateResponse.json()) as ConfluenceErrorResponse
     console.error('Could not post update to page\n', errorBody)
-    throw Error('Could not post update: ' + errorBody.message)
+    throw Error('Could not update page: ' + errorBody.message)
   }
 
   const responseBody = (await updateResponse.json()) as ConfluencePageSingle
@@ -116,10 +118,10 @@ function generateRequestToken(userEmail: string, apiToken: string) {
   return Buffer.from(userEmail + ':' + apiToken).toString('base64')
 }
 
-function generateHeaders(userEmail: string, apiToken: string, hasBody: boolean = false): import('undici-types').HeadersInit | undefined {
+function generateHeaders(apiConfig: AtlassianApiConfig, hasBody: boolean = false): import('undici-types').HeadersInit | undefined {
   return {
     Accept: 'application/json',
-    Authorization: 'Basic ' + generateRequestToken(userEmail, apiToken),
+    Authorization: 'Basic ' + generateRequestToken(apiConfig.userEmail, apiConfig.apiToken),
     'User-Agent': 'Github to Confluence Reporter',
     ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
   }

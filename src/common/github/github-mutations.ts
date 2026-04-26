@@ -1,4 +1,4 @@
-import { queryGithubGraphQl } from './raw-api'
+import { GithubApiConfig, mutateGithubGraphQl } from './raw-api'
 
 const graphql = String.raw
 
@@ -16,13 +16,30 @@ const setSingleOptionMutation = graphql`
 interface GHSetSingleSelectOptionMutationResponse {
   updateProjectV2ItemFieldValue: { projectV2Item: { id: string } }
 }
-export async function setSingleOptionField(token: string, projectId: string, statusFieldId: string, itemId: string, newValue: string): Promise<void> {
-  const result = await queryGithubGraphQl<GHSetSingleSelectOptionMutationResponse>(token, setSingleOptionMutation, {
-    projectId,
-    statusFieldId,
-    itemId,
-    newValue,
-  })
+export async function setSingleOptionField(
+  apiConfig: GithubApiConfig,
+  projectId: string,
+  statusFieldId: string,
+  itemId: string,
+  newValue: string,
+): Promise<void> {
+  const result = await mutateGithubGraphQl<GHSetSingleSelectOptionMutationResponse>(
+    apiConfig,
+    setSingleOptionMutation,
+    {
+      projectId,
+      statusFieldId,
+      itemId,
+      newValue,
+    },
+    () => ({
+      updateProjectV2ItemFieldValue: {
+        projectV2Item: {
+          id: itemId,
+        },
+      },
+    }),
+  )
   if (result.data.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
     console.error('Unexpected ID: ', result.data.updateProjectV2ItemFieldValue)
     throw Error('Unpexted ID returned when updating status of ' + itemId)
@@ -41,13 +58,24 @@ const setFieldTextIssueMutation = graphql`
 interface GHSetFieldTextMutationResponse {
   updateProjectV2ItemFieldValue: { projectV2Item: { id: string } }
 }
-export async function setFieldText(token: string, projectId: string, fieldId: string, itemId: string, newValue: string): Promise<void> {
-  const result = await queryGithubGraphQl<GHSetFieldTextMutationResponse>(token, setFieldTextIssueMutation, {
-    projectId,
-    fieldId,
-    itemId,
-    newValue,
-  })
+export async function setFieldText(apiConfig: GithubApiConfig, projectId: string, fieldId: string, itemId: string, newValue: string): Promise<void> {
+  const result = await mutateGithubGraphQl<GHSetFieldTextMutationResponse>(
+    apiConfig,
+    setFieldTextIssueMutation,
+    {
+      projectId,
+      fieldId,
+      itemId,
+      newValue,
+    },
+    () => ({
+      updateProjectV2ItemFieldValue: {
+        projectV2Item: {
+          id: itemId,
+        },
+      },
+    }),
+  )
   if (result.data.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
     console.error('Unexpected ID: ', result.data.updateProjectV2ItemFieldValue)
     throw Error('Unpexted ID returned when updating field value of ' + itemId)
@@ -72,11 +100,23 @@ interface GHArchiveIssueMutationResponse {
     }
   }
 }
-export async function archiveIssue(token: string, projectId: string, itemId: string): Promise<void> {
-  const result = await queryGithubGraphQl<GHArchiveIssueMutationResponse>(token, archiveIssueMutation, {
-    projectId: projectId,
-    itemId: itemId,
-  })
+export async function archiveIssue(apiConfig: GithubApiConfig, projectId: string, itemId: string): Promise<void> {
+  const result = await mutateGithubGraphQl<GHArchiveIssueMutationResponse>(
+    apiConfig,
+    archiveIssueMutation,
+    {
+      projectId: projectId,
+      itemId: itemId,
+    },
+    () => ({
+      archiveProjectV2Item: {
+        item: {
+          id: itemId,
+          isArchived: true,
+        },
+      },
+    }),
+  )
   if (result.data.archiveProjectV2Item.item.id !== itemId || result.data.archiveProjectV2Item.item.isArchived === false) {
     console.error('Unexpected result when archiving: ', result.data.archiveProjectV2Item)
     throw Error('Unpexted result returned when archiving ' + itemId)
