@@ -26,7 +26,6 @@ export async function mutateGithubGraphQl<TReturnBody>(
     console.info('Would have made mutation: ', JSON.stringify({ query, variables }))
     return { data: responseIfReadOnly() }
   }
-  throw Error('should be read-only')
   return queryGithubGraphQl(apiConfig, query, variables)
 }
 
