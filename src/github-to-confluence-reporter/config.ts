@@ -54,10 +54,9 @@ const configFromEnvironment: v.InferOutput<typeof RawConfigSchema> = {
 }
 
 export class Config {
-  public boardToPageMappings: v.InferOutput<typeof ProjectBoardMappingSchema>
-
-  public confluenceApiConfig: Readonly<AtlassianApiConfig>
-  public githubApiConfig: Readonly<GithubApiConfig>
+  public readonly boardToPageMappings: v.InferOutput<typeof ProjectBoardMappingSchema>
+  public readonly confluenceApiConfig: Readonly<AtlassianApiConfig>
+  public readonly githubApiConfig: Readonly<GithubApiConfig>
 
   constructor(overrides: Partial<v.InferOutput<typeof RawConfigSchema>> = {}) {
     const result = { ...configFromEnvironment, ...overrides }

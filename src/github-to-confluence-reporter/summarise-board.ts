@@ -7,9 +7,10 @@ import * as githubBoard from './github-board'
 export async function summariseAndTidyBoard(config: Config, page: ConfluencePageDetails, githubProjectId: number) {
   const board = await github.getBoardDetails(config.githubApiConfig, githubProjectId)
   const githubTickets = await github.getAllItems(config.githubApiConfig, githubProjectId)
+  if (githubTickets.length === 0) throw Error('Found empty board - likely an issue on the Github end')
 
   const githubTicketsWithParsedHeader = githubTickets.map(it => {
-    const fieldsFromProject = projectNameToHeadingData(it.projectGHField ?? 'Project Work')
+    const fieldsFromProject = projectNameToHeadingData(it.projectGHField)
     return { ...it, ...fieldsFromProject }
   })
 
@@ -20,8 +21,8 @@ export async function summariseAndTidyBoard(config: Config, page: ConfluencePage
       projectName: it.parsedProjectName ?? '(Unknown)',
       jiraEpic: it.parsedJiraEpic,
       atlasProject: it.parsedAtlasProject,
-      status: it.status ?? 'Unknown',
-      reported: it.reported?.toLowerCase() === 'reported',
+      status: it.statusGHField ?? 'Unknown',
+      reported: it.reportedGHField?.toLowerCase() === 'reported',
     }))
 
   await updateConfluence(config.confluenceApiConfig, tickets, page)

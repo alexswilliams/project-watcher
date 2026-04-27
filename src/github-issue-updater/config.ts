@@ -1,42 +1,44 @@
-export type ConfluencePageDetails = {
-  pageId: string
-  goalsUid: string
-  weeklyUid: string
-}
-export type ProjectBoardToPageMapping = {
-  [key: string]: ConfluencePageDetails
-}
+import * as v from 'valibot'
+import { GithubApiConfig } from '../common/github/raw-api'
 
-export interface Config {
-  canModifyConfluence: boolean
-  canModifyBoard: boolean
-  atlassianBaseUrl: string
-  atlasBaseUrl: string
-  username: string
-  password: string
-  spaceName: string
-  githubToken: string
-  githubOrgName: string
-  projectBoardConfluenceMappings: ProjectBoardToPageMapping
-  lambdaCredentialsBucketName: string
-  lambdaCredentialsFilePath: string
-  awsRegion: string
-}
-export const config: Config = {
-  canModifyConfluence: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE ?? 'false').toLowerCase() === 'true',
-  canModifyBoard: (process.env.GITHUB_PROJECT_JOB_CAN_MODIFY_GITHUB_BOARD ?? 'false').toLowerCase() === 'true',
-  atlassianBaseUrl: process.env.ATLASSIAN_BASE_URL ?? '',
-  atlasBaseUrl: process.env.ATLAS_BASE_URL ?? '',
-  username: process.env.ATLASSIAN_EMAIL ?? '',
-  password: process.env.ATLASSIAN_API_TOKEN ?? '',
-  spaceName: process.env.CONFLUENCE_SPACE_NAME!!,
+export const SecretsSchema = v.object({
+  githubToken: v.pipe(v.string(), v.startsWith('github_pat_')),
+  githubOrgName: v.pipe(v.string(), v.nonEmpty()),
+})
 
+const RawConfigSchema = v.object({
+  ...SecretsSchema.entries,
+
+  githubEndpoint: v.pipe(v.string(), v.url()),
+  canModifyBoard: v.boolean(),
+  boardNumber: v.pipe(v.number(), v.minValue(1)),
+})
+
+const configFromEnvironment: v.InferOutput<typeof RawConfigSchema> = {
   githubToken: process.env.GITHUB_PROJECTS_TOKEN ?? '',
   githubOrgName: process.env.GITHUB_ORG_NAME ?? '',
+  githubEndpoint: process.env.GITHUB_ENDPOINT ?? 'https://api.github.com/graphql',
+  canModifyBoard: (process.env.CAN_MODIFY_GITHUB_BOARD ?? 'false').toLowerCase() === 'true',
+  boardNumber: Number(process.env.GITHUB_BOARD_NUMBER ?? '-1'),
 
-  projectBoardConfluenceMappings: JSON.parse(process.env.GITHUB_PROJECT_TO_PAGE_MAPPINGS ?? '{}'),
+  // Note: AWS-specific config is handled separately within the lambda bootstrap
+}
 
-  lambdaCredentialsBucketName: process.env.LAMBDA_CREDENTIALS_BUCKET_NAME ?? '',
-  lambdaCredentialsFilePath: process.env.LAMBDA_CREDENTIALS_FILE_PATH ?? '',
-  awsRegion: process.env.AWS_REGION ?? '',
+export class Config {
+  public readonly boardNumber: number
+  public readonly githubApiConfig: Readonly<GithubApiConfig>
+
+  constructor(overrides: Partial<v.InferOutput<typeof RawConfigSchema>> = {}) {
+    const result = { ...configFromEnvironment, ...overrides }
+
+    v.is(RawConfigSchema, result)
+
+    this.boardNumber = result.boardNumber
+    this.githubApiConfig = {
+      readOnly: !result.canModifyBoard,
+      apiToken: result.githubToken,
+      orgName: result.githubOrgName,
+      endpoint: result.githubEndpoint,
+    }
+  }
 }

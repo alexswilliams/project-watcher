@@ -1,8 +1,12 @@
-export function projectNameToHeadingData(it: string): {
+const NULL_RESPONSE = { parsedProjectName: null, parsedJiraEpic: null, parsedAtlasProject: null } as const
+
+export function projectNameToHeadingData(it: string | null): {
   parsedJiraEpic: string | null
   parsedAtlasProject: string | null
   parsedProjectName: string | null
 } {
+  if (it === null || it === undefined || it.trim() === '') return NULL_RESPONSE
+
   const groups = it.split(/- |[,:]/)
   let lastJiraGroup = -1
   let lastAltasGroup = -1

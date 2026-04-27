@@ -32,19 +32,11 @@ export class GithubIssueUpdaterStack extends Stack {
       handler: 'handler',
       entry: path.join(__dirname, '..', '..', 'src', 'github-issue-updater', 'lambda.ts'),
       role: lambdaRole,
-      timeout: Duration.seconds(30),
+      timeout: Duration.seconds(90),
       logGroup: logGroup,
       environment: {
-        GITHUB_PROJECT_JOB_CAN_MODIFY_CONFLUENCE: 'true',
-        GITHUB_PROJECT_JOB_CAN_MODIFY_GITHUB_BOARD: 'true',
-        GITHUB_PROJECT_TO_PAGE_MAPPINGS: JSON.stringify({
-          '205': {
-            pageId: '231453462',
-            goalsUid: '482aaeaf-142c-416b-a7cd-eb6228de1505',
-            weeklyUid: '4ceae4f5-6037-413a-b266-6222debaeb32',
-          },
-        }),
-        CONFLUENCE_SPACE_NAME: 'ENG',
+        CAN_MODIFY_GITHUB_BOARD: 'true',
+        GITHUB_BOARD_NUMBER: '205',
         LAMBDA_CREDENTIALS_BUCKET_NAME: commonStack.credentialBucketName(),
         LAMBDA_CREDENTIALS_FILE_PATH: commonStack.credentialsFilePath,
         // AWS_REGION: this.region, // predefined by lambda runtime
@@ -53,7 +45,7 @@ export class GithubIssueUpdaterStack extends Stack {
 
     new Schedule(this, 'InvocationSchedule', {
       enabled: true,
-      schedule: ScheduleExpression.cron({ minute: '3', timeZone: TimeZone.EUROPE_LONDON }),
+      schedule: ScheduleExpression.cron({ minute: '36', timeZone: TimeZone.EUROPE_LONDON }),
       target: new LambdaInvoke(fn, { retryAttempts: 0, role: schedulerRole, deadLetterQueue: commonStack.deadLetterQueue }),
       description: 'Invokes the Github Issue Updater lambda to update ticket metadata on github boards.',
     })

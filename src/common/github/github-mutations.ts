@@ -4,10 +4,8 @@ import { GithubApiConfig, mutateGithubGraphQl } from './raw-api'
 const graphql = String.raw
 
 const setSingleOptionMutation = graphql`
-  mutation SetSingleSelectOption($projectId: ID!, $statusFieldId: ID!, $itemId: ID!, $newValue: String!) {
-    updateProjectV2ItemFieldValue(
-      input: { projectId: $projectId, itemId: $itemId, fieldId: $statusFieldId, value: { singleSelectOptionId: $newValue } }
-    ) {
+  mutation SetSingleSelectOption($projectId: ID!, $fieldId: ID!, $itemId: ID!, $newValue: String!) {
+    updateProjectV2ItemFieldValue(input: { projectId: $projectId, itemId: $itemId, fieldId: $fieldId, value: { singleSelectOptionId: $newValue } }) {
       projectV2Item {
         id
       }
@@ -17,20 +15,20 @@ const setSingleOptionMutation = graphql`
 const GHSetSingleSelectOptionMutationResponseSchema = v.object({
   updateProjectV2ItemFieldValue: v.object({ projectV2Item: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }) }),
 })
-
 export async function setSingleOptionField(
   apiConfig: GithubApiConfig,
   projectId: string,
-  statusFieldId: string,
+  fieldId: string,
   itemId: string,
-  newValue: string,
+  newValue: string | null,
 ): Promise<void> {
+  if (newValue === null) return clearField(apiConfig, projectId, fieldId, itemId)
   const result = await mutateGithubGraphQl(
     apiConfig,
     setSingleOptionMutation,
     {
       projectId,
-      statusFieldId,
+      fieldId,
       itemId,
       newValue,
     },
@@ -61,7 +59,14 @@ const setFieldTextIssueMutation = graphql`
 const GHSetFieldTextMutationResponseSchema = v.object({
   updateProjectV2ItemFieldValue: v.object({ projectV2Item: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }) }),
 })
-export async function setFieldText(apiConfig: GithubApiConfig, projectId: string, fieldId: string, itemId: string, newValue: string): Promise<void> {
+export async function setFieldText(
+  apiConfig: GithubApiConfig,
+  projectId: string,
+  fieldId: string,
+  itemId: string,
+  newValue: string | null,
+): Promise<void> {
+  if (newValue === null) return clearField(apiConfig, projectId, fieldId, itemId)
   const result = await mutateGithubGraphQl(
     apiConfig,
     setFieldTextIssueMutation,
@@ -86,6 +91,86 @@ export async function setFieldText(apiConfig: GithubApiConfig, projectId: string
   }
 }
 
+const setFieldDateIssueMutation = graphql`
+  mutation SetFieldDate($projectId: ID!, $fieldId: ID!, $itemId: ID!, $newValue: String!) {
+    updateProjectV2ItemFieldValue(input: { projectId: $projectId, itemId: $itemId, fieldId: $fieldId, value: { date: $newValue } }) {
+      projectV2Item {
+        id
+      }
+    }
+  }
+`
+const GHSetFieldDateMutationResponseSchema = v.object({
+  updateProjectV2ItemFieldValue: v.object({ projectV2Item: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }) }),
+})
+export async function setFieldDate(
+  apiConfig: GithubApiConfig,
+  projectId: string,
+  fieldId: string,
+  itemId: string,
+  newValue: string | null,
+): Promise<void> {
+  if (newValue === null) return clearField(apiConfig, projectId, fieldId, itemId)
+  const result = await mutateGithubGraphQl(
+    apiConfig,
+    setFieldDateIssueMutation,
+    {
+      projectId,
+      fieldId,
+      itemId,
+      newValue,
+    },
+    GHSetFieldDateMutationResponseSchema,
+    () => ({
+      updateProjectV2ItemFieldValue: {
+        projectV2Item: {
+          id: itemId,
+        },
+      },
+    }),
+  )
+  if (result.updateProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
+    console.error('Unexpected ID: ', result.updateProjectV2ItemFieldValue)
+    throw Error('Unpexted ID returned when updating field value of ' + itemId)
+  }
+}
+
+const clearFieldTextIssueMutation = graphql`
+  mutation ClearFieldText($projectId: ID!, $fieldId: ID!, $itemId: ID!) {
+    clearProjectV2ItemFieldValue(input: { projectId: $projectId, itemId: $itemId, fieldId: $fieldId }) {
+      projectV2Item {
+        id
+      }
+    }
+  }
+`
+const GHClearFieldTextMutationResponseSchema = v.object({
+  clearProjectV2ItemFieldValue: v.object({ projectV2Item: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }) }),
+})
+export async function clearField(apiConfig: GithubApiConfig, projectId: string, fieldId: string, itemId: string): Promise<void> {
+  const result = await mutateGithubGraphQl(
+    apiConfig,
+    clearFieldTextIssueMutation,
+    {
+      projectId,
+      fieldId,
+      itemId,
+    },
+    GHClearFieldTextMutationResponseSchema,
+    () => ({
+      clearProjectV2ItemFieldValue: {
+        projectV2Item: {
+          id: itemId,
+        },
+      },
+    }),
+  )
+  if (result.clearProjectV2ItemFieldValue.projectV2Item.id !== itemId) {
+    console.error('Unexpected ID: ', result.clearProjectV2ItemFieldValue)
+    throw Error('Unpexted ID returned when clearing field ' + itemId)
+  }
+}
+
 const archiveIssueMutation = graphql`
   mutation ArchiveIssue($projectId: ID!, $itemId: ID!) {
     archiveProjectV2Item(input: { projectId: $projectId, itemId: $itemId }) {
@@ -96,7 +181,6 @@ const archiveIssueMutation = graphql`
     }
   }
 `
-
 const GHArchiveIssueMutationResponseSchema = v.object({
   archiveProjectV2Item: v.object({
     item: v.object({

@@ -20,7 +20,7 @@ v.is(
 
 const s3 = new S3Client({ region: awsConfig.awsRegion })
 
-export const handler = async (event: unknown): Promise<void> => {
+export const handler = async (): Promise<void> => {
   const command = new GetObjectCommand({ Bucket: awsConfig.lambdaCredentialsBucketName, Key: awsConfig.lambdaCredentialsFilePath })
   const secretsFile = await s3.send(command)
   const secrets = v.parse(SecretsSchema, await secretsFile.Body?.transformToString())

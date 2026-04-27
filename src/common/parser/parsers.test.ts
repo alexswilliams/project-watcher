@@ -4,6 +4,18 @@ describe('Project Name Parser', () => {
   describe('Success cases', () => {
     test.each([
       {
+        input: null,
+        expectedOutput: { parsedJiraEpic: null, parsedAtlasProject: null, parsedProjectName: null },
+      },
+      {
+        input: '',
+        expectedOutput: { parsedJiraEpic: null, parsedAtlasProject: null, parsedProjectName: null },
+      },
+      {
+        input: ' ',
+        expectedOutput: { parsedJiraEpic: null, parsedAtlasProject: null, parsedProjectName: null },
+      },
+      {
         input: 'Project Name',
         expectedOutput: { parsedJiraEpic: null, parsedAtlasProject: null, parsedProjectName: 'Project Name' },
       },
@@ -96,8 +108,12 @@ describe('Project Name Parser', () => {
         expectedOutput: { parsedJiraEpic: 'BLAH-123', parsedAtlasProject: 'BOOPLING-12', parsedProjectName: 'Project Name' },
       },
       {
-        input: '0: People Admin Tasks',
-        expectedOutput: { parsedJiraEpic: null, parsedAtlasProject: null, parsedProjectName: '0: People Admin Tasks' },
+        input: '1: Project Name - BOOPLING-12, BLAH-123',
+        expectedOutput: { parsedJiraEpic: 'BLAH-123', parsedAtlasProject: 'BOOPLING-12', parsedProjectName: '1: Project Name' },
+      },
+      {
+        input: '0: Admin Tasks',
+        expectedOutput: { parsedJiraEpic: null, parsedAtlasProject: null, parsedProjectName: '0: Admin Tasks' },
       },
     ])('Testing $input', scenario => {
       expect(projectNameToHeadingData(scenario.input)).toEqual(scenario.expectedOutput)

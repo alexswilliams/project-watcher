@@ -20,6 +20,8 @@ const GHBoardSchema = v.object({
   projectField: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }),
   jiraEpicField: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }),
   atlasProjectField: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }),
+  startDateField: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }),
+  endDateField: v.object({ id: v.pipe(v.string(), v.nonEmpty()) }),
   reportedField: v.object({
     id: v.pipe(v.string(), v.nonEmpty()),
     options: v.array(v.object({ id: v.pipe(v.string(), v.nonEmpty()), name: v.pipe(v.string(), v.nonEmpty()) })),
@@ -84,10 +86,10 @@ export interface GHTicketSpec {
   projectGHField: string | null
   jiraEpicGHField: string | null
   atlasProjectGHField: string | null
-  startDate: string | null
-  endDate: string | null
-  status: string | null
-  reported: string | null
+  startDateGHField: string | null
+  endDateGHField: string | null
+  statusGHField: string | null
+  reportedGHField: string | null
   title: string | null
 }
 export async function getAllItems(apiConfig: GithubApiConfig, projectNumber: number): Promise<GHTicketSpec[]> {
@@ -107,10 +109,10 @@ export async function getAllItems(apiConfig: GithubApiConfig, projectNumber: num
           projectGHField: node.project?.text ?? null,
           jiraEpicGHField: node.jiraEpic?.text ?? null,
           atlasProjectGHField: node.atlasProject?.text ?? null,
-          startDate: node.startDate?.date ?? null,
-          endDate: node.endDate?.date ?? null,
-          status: node.status?.name ?? null,
-          reported: node.reported?.name ?? null,
+          startDateGHField: node.startDate?.date ?? null,
+          endDateGHField: node.endDate?.date ?? null,
+          statusGHField: node.status?.name ?? null,
+          reportedGHField: node.reported?.name ?? null,
           title: node.title?.text ?? null,
         })),
       )

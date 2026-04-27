@@ -65,4 +65,5 @@ flowchart LR
   - Populate the keychain with the API keys by running `./update-local-secrets.sh`.
     - NOTE: if the token is longer than 128 characters, you may have to edit it manually in the Keychain Access app to have the full string.
 - Load the environment for the task to run in with `source environ`
-- Run locally to test with `npm run run` (this will update confluence (specifically a test page under my personal space, easily changed in package.json), but _won't_ modify the github board).
+- Run locally to test with `npm run reporter` (this will update confluence (specifically a test page under my personal space, easily changed in package.json), but _won't_ modify the github board).
+- Run locally to test with `npm run updater` (this will list what actions would be taken, but _won't_ modify the github board).
