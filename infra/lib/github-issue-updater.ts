@@ -22,7 +22,7 @@ export class GithubIssueUpdaterStack extends Stack {
       retention: RetentionDays.ONE_MONTH,
       removalPolicy: RemovalPolicy.DESTROY,
       logGroupClass: LogGroupClass.INFREQUENT_ACCESS,
-      logGroupName: 'ScraperFunctionLogs',
+      logGroupName: 'BoardUpdaterFunctionLogs',
     })
     logGroup.grantWrite(lambdaRole)
 

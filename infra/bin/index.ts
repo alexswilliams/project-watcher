@@ -16,5 +16,4 @@ new NodeVersionReporterStack(app, env)
 
 const commonStack = new GithubCommonStack(app, env)
 new GithubToConfluenceReporterStack(app, env, commonStack)
-// Uncomment to have the hourly job running
-// new GithubIssueUpdaterStack(app, env, commonStack)
+new GithubIssueUpdaterStack(app, env, commonStack)

@@ -16,7 +16,7 @@ Deployed with a CDK project to a dedicated AWS account:
 - Lambda: queries github, generates a page body and updates an existing confluence page
 - EventBridge Rule: schedules the execution of the lambda once per week
 
-Deploying: in the simplest case, run `npm run synth` to view output and `npm run deploy` to deploy, or `npm run cdk diff` to see what will change.
+Deploying: in the simplest case, run `npm run synth` to generate output to the cdk.out folder, and `npm run deploy` to deploy, or `npm run cdk -- diff` to see what will change.
 
 ### Page Layout
 
@@ -38,13 +38,16 @@ flowchart LR
   Q --> R[Github Issue Updater Lambda]
 ```
 
-### Updating
+### Maintenance
+
+#### Dependencies
 
 - ```shell
   nvm use || nvm install
   npm ci
   npx npm-upgrade
   rm package-lock.json
+  rm -rf node_modules
   npm install
   npm ci
   npm audit # examine output to see if any packages are vulnerable
@@ -59,6 +62,23 @@ flowchart LR
 
   - If this is different from the value in `.mvnrc` then update `.nvmrc` with the new version and run `nvm install && npm ci`.
   - If this includes a major version upgrade, also update the `tsconfig` dependency and the `tsconfig.json` file, and also run `npm i` to rebuild the package lock file.
+
+### CDK
+
+- Sometimes the CDK itself will need updating - this happens once in a blue moon, but eventually stacks will stop deploying unless the environment is periodically re-bootstrapped:
+
+  ```shell
+  npm run cdk -- bootstrap
+
+   ⏳  Bootstrapping environment aws://381491894561/eu-west-1...
+  Trusted accounts for deployment: (none)
+  Trusted accounts for lookup: (none)
+  Using default execution policy of 'arn:aws:iam::aws:policy/AdministratorAccess'. Pass '--cloudformation-execution-policies' to customize.
+  CDKToolkit: creating CloudFormation changeset...
+  ✅  Environment aws://381491894561/eu-west-1 bootstrapped.
+  ```
+
+#### Testing Changes
 
 - If this is your first time running this project locally:
   - Populate the missing env variables in `environ`.
