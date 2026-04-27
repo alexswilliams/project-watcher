@@ -4,7 +4,11 @@ import * as v from 'valibot'
 import { GithubApiConfig, queryGithubGraphQl, queryGithubGraphQlPaged } from './raw-api'
 
 function loadQuery(filename: string): string {
-  return fs.readFileSync(path.join(__dirname, filename), { encoding: 'utf8' })
+  const pathLocally = path.join(__dirname, 'graphql', filename)
+  const pathInAws = path.join('/opt', filename)
+  const pathToUse = [pathLocally, pathInAws].find(it => fs.existsSync(it))
+  if (!pathToUse) throw Error('Could not find ' + filename)
+  return fs.readFileSync(pathToUse, { encoding: 'utf8' })
 }
 
 const boardQuery = loadQuery('find-board-details.graphql')

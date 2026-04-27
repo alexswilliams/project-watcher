@@ -23,7 +23,7 @@ const s3 = new S3Client({ region: awsConfig.awsRegion })
 export const handler = async (): Promise<void> => {
   const command = new GetObjectCommand({ Bucket: awsConfig.lambdaCredentialsBucketName, Key: awsConfig.lambdaCredentialsFilePath })
   const secretsFile = await s3.send(command)
-  const secrets = v.parse(SecretsSchema, await secretsFile.Body?.transformToString())
+  const secrets = v.parse(SecretsSchema, JSON.parse((await secretsFile.Body?.transformToString()) ?? '{}'))
 
   const configWithOverrides = new Config({
     githubToken: secrets.githubToken,

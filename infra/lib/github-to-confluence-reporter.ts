@@ -47,6 +47,7 @@ export class GithubToConfluenceReporterStack extends Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '..', '..', 'src', 'github-to-confluence-reporter', 'lambda.ts'),
+      layers: [commonStack.graphQlLayer],
       role: lambdaRole,
       timeout: Duration.seconds(30),
       logGroup: logGroup,

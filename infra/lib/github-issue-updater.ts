@@ -31,6 +31,7 @@ export class GithubIssueUpdaterStack extends Stack {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'handler',
       entry: path.join(__dirname, '..', '..', 'src', 'github-issue-updater', 'lambda.ts'),
+      layers: [commonStack.graphQlLayer],
       role: lambdaRole,
       timeout: Duration.seconds(90),
       logGroup: logGroup,

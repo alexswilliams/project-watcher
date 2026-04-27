@@ -1,16 +1,19 @@
 import { Grant, IGrantable, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
+import { Code, ILayerVersion, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda'
 import { CfnPipe } from 'aws-cdk-lib/aws-pipes'
 import { BlockPublicAccess, Bucket, BucketAccessControl, BucketEncryption, IBucket } from 'aws-cdk-lib/aws-s3'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { IQueue, Queue } from 'aws-cdk-lib/aws-sqs'
 import { Environment, RemovalPolicy, Stack } from 'aws-cdk-lib/core'
 import { Construct } from 'constructs'
+import path from 'path'
 
 export class GithubCommonStack extends Stack {
   public readonly credentialsFilePath: string = 'credentials.json'
 
   public readonly deadLetterQueue: IQueue
   private readonly credentialsBucket: IBucket
+  public readonly graphQlLayer: ILayerVersion
 
   constructor(scope: Construct, env: Required<Environment>) {
     super(scope, `GithubCommon`, { env })
@@ -36,6 +39,12 @@ export class GithubCommonStack extends Stack {
       source: this.deadLetterQueue,
       target: topic,
       roleArn: pipeRole,
+    })
+
+    this.graphQlLayer = new LayerVersion(this, 'GraphQlLayer', {
+      code: Code.fromAsset(path.join(__dirname, '..', '..', 'src', 'common', 'github', 'graphql')),
+      compatibleRuntimes: [Runtime.NODEJS_24_X, Runtime.NODEJS_LATEST],
+      removalPolicy: RemovalPolicy.DESTROY,
     })
   }
 
