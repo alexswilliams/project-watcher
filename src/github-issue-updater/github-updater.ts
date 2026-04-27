@@ -8,6 +8,7 @@ export async function updateTickets(apiConfig: github.GithubApiConfig, boardNumb
   const board = await github.getBoardDetails(apiConfig, boardNumber)
   const fetchedTickets = (await github.getAllItems(apiConfig, boardNumber)).filter(it => !it.isArchived)
   if (fetchedTickets.length === 0) throw Error('Found empty board - likely an issue on the Github end')
+  console.log(`Found ${fetchedTickets.length} tickets`)
 
   const tickets = fetchedTickets.map(it => {
     const fieldsFromProject = projectNameToHeadingData(it.projectGHField)
@@ -22,11 +23,10 @@ export async function updateTickets(apiConfig: github.GithubApiConfig, boardNumb
 
   const allActions = findActionsToPerform(tickets, apiConfig, board, dateInLondon)
 
-  console.log(allActions)
-  allActions.forEach(it => {
+  for (const it of allActions) {
     console.log(' > ' + it.description)
-    it.action()
-  })
+    await it.action()
+  }
 }
 
 type ResolvedTicket = Omit<github.GHTicketSpec, 'reported'> & {

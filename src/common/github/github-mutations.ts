@@ -92,7 +92,7 @@ export async function setFieldText(
 }
 
 const setFieldDateIssueMutation = graphql`
-  mutation SetFieldDate($projectId: ID!, $fieldId: ID!, $itemId: ID!, $newValue: String!) {
+  mutation SetFieldDate($projectId: ID!, $fieldId: ID!, $itemId: ID!, $newValue: Date!) {
     updateProjectV2ItemFieldValue(input: { projectId: $projectId, itemId: $itemId, fieldId: $fieldId, value: { date: $newValue } }) {
       projectV2Item {
         id
