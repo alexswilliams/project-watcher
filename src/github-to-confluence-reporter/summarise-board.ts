@@ -28,5 +28,5 @@ export async function summariseAndTidyBoard(config: Config, page: ConfluencePage
   await updateConfluence(config.confluenceApiConfig, tickets, page)
 
   await githubBoard.archivePreviousReported(config.githubApiConfig, githubTickets, board)
-  await githubBoard.moveToDoneAndReportedAndAddReportedLabel(config.githubApiConfig, githubTickets, board)
+  await githubBoard.addReportedLabel(config.githubApiConfig, githubTickets, board)
 }

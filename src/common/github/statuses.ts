@@ -1,11 +1,10 @@
-export type TicketStatus = `NO_STATUS` | `TODO` | `IN_PROGRESS` | `BLOCKED` | `DONE` | `DONE_AND_REPORTED`
+export type TicketStatus = `NO_STATUS` | `TODO` | `IN_PROGRESS` | `BLOCKED` | `DONE` // | `DONE_AND_REPORTED`
 
 const statusTextToStatus: { [key in string]: TicketStatus } = {
   todo: 'TODO',
   inprogress: 'IN_PROGRESS',
   blocked: 'BLOCKED',
   done: 'DONE',
-  donereported: 'DONE_AND_REPORTED',
 }
 
 function normaliseStatusName(status: string) {
