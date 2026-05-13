@@ -69,7 +69,8 @@ export class GithubToConfluenceReporterStack extends Stack {
 
     new Schedule(this, 'InvocationSchedule', {
       enabled: true,
-      schedule: ScheduleExpression.cron({ hour: '17', minute: '46', weekDay: Weekday.TUESDAY, timeZone: TimeZone.EUROPE_LONDON }),
+      // Note: using Weekday.TUESDAY sets the string '2', which used to mean Tuesday but now means Monday since mid-2026 because... America.
+      schedule: ScheduleExpression.cron({ hour: '17', minute: '46', weekDay: 'TUE', timeZone: TimeZone.EUROPE_LONDON }),
       target: new LambdaInvoke(fn, { retryAttempts: 0, role: schedulerRole, deadLetterQueue: commonStack.deadLetterQueue }),
       description: 'Invokes the Github->Confluence Reporter lambda to issue summaries into confluence and mark reported issues.',
     })
