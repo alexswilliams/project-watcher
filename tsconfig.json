@@ -3,6 +3,8 @@
   "include": ["infra/**/*", "src/**/*"],
   "exclude": ["**/*.spec.ts", "cdk.out"],
   "compilerOptions": {
+    "noEmit": true,
+    "isolatedModules": true,
     "types": ["node"]
   }
 }
